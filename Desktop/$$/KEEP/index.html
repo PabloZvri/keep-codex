@@ -1,0 +1,1474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KEEP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+  <style>
+    /* ─── TOKENS ─────────────────────────────────────── */
+    :root {
+      --bg:       #050505;
+      --text:     #e8e4dd;
+      --accent:   #1a6bff;
+
+      /* text opacity steps */
+      --text-hi:  rgba(232, 228, 221, 0.92);
+      --text-mid: rgba(232, 228, 221, 0.55);
+      --text-dim: rgba(232, 228, 221, 0.28);
+      --text-sub: rgba(232, 228, 221, 0.11);
+
+      /* borders */
+      --border:   rgba(232, 228, 221, 0.06);
+
+      /* layout */
+      --nav-h:    52px;
+      --side-w:   48px;
+    }
+
+    /* ─── RESET ──────────────────────────────────────── */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* ─── BASE ───────────────────────────────────────── */
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 200;
+      font-size: 15px;
+      line-height: 1.6;
+      overflow-x: hidden;
+      cursor: none;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* ─── SCROLLBAR ──────────────────────────────────── */
+    ::-webkit-scrollbar       { width: 2px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--accent); }
+    *                          { scrollbar-width: thin; scrollbar-color: var(--accent) var(--bg); }
+
+    /* ─── TYPOGRAPHY ROLES ───────────────────────────── */
+    /* display headings → Bebas Neue */
+    h1, h2, h3, h4, h5, h6,
+    .t-display {
+      font-family: 'Bebas Neue', sans-serif;
+      font-weight: 400;
+      letter-spacing: 0.04em;
+      line-height: 1;
+    }
+
+    /* data / labels / mono → Space Mono */
+    .t-mono,
+    code,
+    pre {
+      font-family: 'Space Mono', monospace;
+      font-weight: 400;
+    }
+
+    /* body copy → DM Sans 200 (inherits from body) */
+    .t-body {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 200;
+    }
+
+    /* ─── NAV ────────────────────────────────────────── */
+    #nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: var(--nav-h);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      z-index: 1000;
+    }
+
+    /* ─── SIDEBARS ───────────────────────────────────── */
+    #sidebar-left,
+    #sidebar-right {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      width: var(--side-w);
+      background: var(--bg);
+      z-index: 900;
+    }
+
+    #sidebar-left  { left: 0;  border-right: 1px solid var(--border); }
+    #sidebar-right { right: 0; border-left:  1px solid var(--border); }
+
+    /* ─── CONTENT AREA ───────────────────────────────── */
+    main {
+      margin: 0 var(--side-w);
+      padding-top: var(--nav-h);
+    }
+
+    #footer {
+      margin: 0 var(--side-w);
+    }
+
+    /* ─── CURSOR ─────────────────────────────────────── */
+    #cursor-dot,
+    #cursor-ring {
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      will-change: transform, left, top;
+    }
+
+    #cursor-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      z-index: 10000;
+    }
+
+    #cursor-ring {
+      width: 26px;
+      height: 26px;
+      border: 1px solid rgba(26, 107, 255, 0.5);
+      border-radius: 50%;
+      z-index: 9999;
+      transition: width 0.2s ease, height 0.2s ease, border-color 0.2s ease;
+    }
+
+    /* ring expands on interactive elements */
+    body:has(a:hover, button:hover, [role="button"]:hover) #cursor-ring {
+      width: 40px;
+      height: 40px;
+      border-color: rgba(26, 107, 255, 0.8);
+    }
+
+    /* ─── LOCK SCREEN ────────────────────────────────── */
+    #lock {
+      position: fixed;
+      inset: 0;
+      z-index: 5000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      transition: opacity 0.7s ease;
+    }
+
+    #lock.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #lock-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    #lock-ui {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 44px;
+    }
+
+    /* CSS lock icon — body + angular shackle, zero libraries */
+    #lock-icon {
+      position: relative;
+      width: 28px;
+      height: 22px;
+      border: 1.5px solid var(--text-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.3s;
+    }
+
+    #lock-icon::before {                    /* shackle: angular U */
+      content: '';
+      position: absolute;
+      top: -16px;
+      left: 5px;
+      right: 5px;
+      height: 15px;
+      border: 1.5px solid var(--text-dim);
+      border-bottom: none;
+      transition: border-color 0.3s, transform 0.38s ease;
+    }
+
+    #lock-icon::after {                     /* keyhole pip */
+      content: '';
+      width: 5px;
+      height: 5px;
+      background: var(--text-dim);
+      transition: background 0.3s;
+    }
+
+    #lock.unlocking #lock-icon            { border-color: var(--accent); }
+    #lock.unlocking #lock-icon::before    { border-color: var(--accent); transform: translateY(-9px); }
+    #lock.unlocking #lock-icon::after     { background: var(--accent); }
+
+    #lock-wordmark {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(64px, 11vw, 108px);
+      letter-spacing: 0.14em;
+      color: var(--text);
+      line-height: 1;
+      user-select: none;
+    }
+
+    #lock-form {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    #lock-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.44em;
+      color: var(--text-dim);
+    }
+
+    #lock-input {
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid rgba(232, 228, 221, 0.18);
+      outline: none;
+      width: 220px;
+      padding: 10px 0;
+      text-align: center;
+      font-family: 'Space Mono', monospace;
+      font-size: 14px;
+      letter-spacing: 0.5em;
+      color: var(--text-hi);
+      caret-color: var(--accent);
+      transition: border-color 0.2s;
+    }
+
+    #lock-input:focus  { border-bottom-color: var(--text-mid); }
+
+    #lock-input.error {
+      border-bottom-color: #e02020;
+      animation: lock-shake 0.42s ease;
+    }
+
+    @keyframes lock-shake {
+      0%, 100% { transform: translateX(0); }
+      16%      { transform: translateX(-10px); }
+      33%      { transform: translateX(9px); }
+      50%      { transform: translateX(-7px); }
+      66%      { transform: translateX(5px); }
+      83%      { transform: translateX(-2px); }
+    }
+
+    #lock-error {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.3em;
+      color: transparent;
+      height: 14px;
+      transition: color 0.15s;
+    }
+
+    #lock-error.show { color: #e02020; }
+
+    #lock-ver {
+      position: absolute;
+      bottom: 22px;
+      left: 26px;
+      font-family: 'Space Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 0.22em;
+      color: var(--text-sub);
+    }
+
+    /* ─── 01 HERO ────────────────────────────────────── */
+    #hero {
+      position: relative;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #hero-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .hero-inner {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .hero-tag {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.44em;
+      color: var(--text-dim);
+      margin-bottom: 22px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.6s ease 0.0s, transform 0.6s ease 0.0s;
+    }
+
+    .hero-title-wrap {
+      position: relative;
+      display: inline-block;
+      line-height: 1;
+    }
+
+    .hero-ghost {
+      position: absolute;
+      top: 0;
+      left: 0;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(80px, 18vw, 220px);
+      letter-spacing: 0.12em;
+      line-height: 1;
+      color: transparent;
+      -webkit-text-stroke: 1px rgba(232, 228, 221, 0.08);
+      transform: translate(5px, 5px);
+      pointer-events: none;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    .hero-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(80px, 18vw, 220px);
+      letter-spacing: 0.12em;
+      color: var(--text);
+      line-height: 1;
+      position: relative;
+      white-space: nowrap;
+      opacity: 0;
+      transform: translateY(22px);
+      transition: opacity 0.85s ease 0.1s, transform 0.85s ease 0.1s;
+    }
+
+    .hero-sub {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.38em;
+      color: var(--text-mid);
+      margin-top: 30px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.7s ease 0.4s, transform 0.7s ease 0.4s;
+    }
+
+    .hero-body {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 200;
+      font-size: 14px;
+      color: var(--text-dim);
+      margin-top: 10px;
+      letter-spacing: 0.03em;
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.7s ease 0.65s, transform 0.7s ease 0.65s;
+    }
+
+    .hero-scroll {
+      position: absolute;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      opacity: 0;
+      transition: opacity 0.6s ease 1.05s;
+    }
+
+    .hero-scroll-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 0.32em;
+      color: var(--text-sub);
+    }
+
+    .hero-scroll-line {
+      width: 1px;
+      height: 52px;
+      background: var(--text-dim);
+      animation: hero-tick 2.2s ease-in-out infinite;
+    }
+
+    @keyframes hero-tick {
+      0%, 100% { opacity: 0.3; }
+      50%       { opacity: 0.85; }
+    }
+
+    #hero.revealed .hero-tag,
+    #hero.revealed .hero-title,
+    #hero.revealed .hero-sub,
+    #hero.revealed .hero-body  { opacity: 1; transform: translateY(0); }
+    #hero.revealed .hero-scroll { opacity: 1; }
+
+    /* ─── 02 PILLARS ─────────────────────────────────── */
+    #pillars {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      border-top: 1px solid var(--border);
+    }
+
+    .pillar {
+      position: relative;
+      padding: 28px 22px 24px;
+      border-right: 1px solid var(--border);
+      min-height: 168px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      transition: background 0.3s;
+      cursor: default;
+    }
+
+    .pillar:last-child { border-right: none; }
+    .pillar:hover      { background: rgba(232, 228, 221, 0.014); }
+
+    /* accent bar sweeps in from left on hover */
+    .pillar::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: var(--accent);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.38s ease;
+    }
+
+    .pillar:hover::before { transform: scaleX(1); }
+
+    /* stagger: even columns sit lower */
+    .pillar:nth-child(2) { padding-top: 44px; }
+    .pillar:nth-child(4) { padding-top: 50px; }
+    .pillar:nth-child(6) { padding-top: 38px; }
+
+    .pillar-num {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 0.2em;
+      color: var(--text-dim);
+    }
+
+    .pillar-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px;
+      letter-spacing: 0.06em;
+      color: rgba(232, 228, 221, 0.38);
+      flex: 1;
+      display: flex;
+      align-items: flex-end;
+      padding-bottom: 8px;
+      transition: color 0.3s;
+    }
+
+    .pillar:hover .pillar-name { color: var(--text); }
+
+    .pillar-bar {
+      height: 1px;
+      background: var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pillar-fill {
+      position: absolute;
+      top: 0; bottom: 0; left: 0;
+      background: rgba(232, 228, 221, 0.28);
+      transition: background 0.3s, width 0.55s ease;
+    }
+
+    .pillar:hover .pillar-fill { background: var(--accent); }
+
+    /* ─── 03 MANIFESTO ───────────────────────────────── */
+    #manifesto {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      border-top: 1px solid var(--border);
+      padding: 100px 8vw;
+      overflow: hidden;
+    }
+
+    .mnf-lines {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+    }
+
+    .mnf-line {
+      display: block;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(44px, 6.8vw, 86px);
+      letter-spacing: 0.02em;
+      line-height: 1.12;
+      opacity: 0;
+      transform: translateY(22px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+
+    .mnf-line.in-view { opacity: 1; transform: translateY(0); }
+
+    /* cascade delay */
+    .mnf-line:nth-child(1) { transition-delay:   0ms; }
+    .mnf-line:nth-child(2) { transition-delay:  90ms; }
+    .mnf-line:nth-child(3) { transition-delay: 180ms; }
+    .mnf-line:nth-child(4) { transition-delay: 270ms; }
+    .mnf-line:nth-child(5) { transition-delay: 360ms; }
+    .mnf-line:nth-child(6) { transition-delay: 450ms; }
+    .mnf-line:nth-child(7) { transition-delay: 540ms; }
+
+    /* misalignment grid */
+    .mnf-line.off-1 { margin-left: 0;     color: var(--text-hi); }
+    .mnf-line.off-2 { margin-left: 9vw;   color: rgba(232,228,221,0.60); }
+    .mnf-line.off-3 { margin-left: 3vw;   color: var(--text-hi); }
+    .mnf-line.off-4 { margin-left: 19vw;  color: rgba(232,228,221,0.60); }
+    .mnf-line.off-5 { margin-left: 1vw;   color: var(--text-hi); }
+    .mnf-line.off-6 { margin-left: 29vw;  color: rgba(232,228,221,0.60); }
+    .mnf-line.off-7 { margin-left: 7vw;   color: var(--accent); margin-top: 36px; }
+
+    /* ─── NAV INNER ──────────────────────────────────── */
+    #nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+    }
+
+    .nav-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 17px;
+      letter-spacing: 0.14em;
+    }
+
+    .nav-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Space Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 0.26em;
+      color: var(--text-mid);
+    }
+
+    .nav-dot {
+      width: 5px;
+      height: 5px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: dot-pulse 2.4s ease-in-out infinite;
+    }
+
+    @keyframes dot-pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.22; }
+    }
+
+    .nav-time {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.16em;
+      color: var(--text-dim);
+      min-width: 120px;
+      text-align: right;
+    }
+
+    /* ─── SIDEBAR INNER ──────────────────────────────── */
+    #sidebar-left,
+    #sidebar-right {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sidebar-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 7.5px;
+      letter-spacing: 0.28em;
+      color: var(--text-dim);
+      writing-mode: vertical-lr;
+    }
+
+    #sidebar-left .sidebar-label { transform: rotate(180deg); }
+
+    /* ─── 04 DROP ────────────────────────────────────── */
+    #drop {
+      position: relative;
+      min-height: 100vh;
+      border-top: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .drop-canvas-col {
+      position: relative;
+      overflow: hidden;
+    }
+
+    #drop-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .drop-content {
+      padding: 80px 60px;
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .drop-tag {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.4em;
+      color: var(--text-dim);
+      margin-bottom: 18px;
+    }
+
+    .drop-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(52px, 6.5vw, 88px);
+      letter-spacing: 0.03em;
+      line-height: 1;
+      margin-bottom: 20px;
+    }
+
+    .drop-body {
+      font-weight: 200;
+      font-size: 15px;
+      color: var(--text-mid);
+      line-height: 1.75;
+      max-width: 340px;
+    }
+
+    .drop-rule {
+      height: 1px;
+      background: var(--border);
+      margin: 30px 0;
+    }
+
+    .lb-head {
+      display: grid;
+      grid-template-columns: 36px 1fr 50px 72px;
+      font-family: 'Space Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 0.28em;
+      color: var(--text-dim);
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .lb-row {
+      display: grid;
+      grid-template-columns: 36px 1fr 50px 72px;
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.09em;
+      color: var(--text-dim);
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      align-items: center;
+      transition: color 0.25s;
+    }
+
+    .lb-row:hover  { color: var(--text-mid); }
+    .lb-rank.top   { color: var(--accent); }
+
+    .drop-prize {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 0.2em;
+      color: var(--text-sub);
+      margin-top: 14px;
+    }
+
+    /* ─── 05 ACCESS ──────────────────────────────────── */
+    #access {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-top: 1px solid var(--border);
+      min-height: 520px;
+    }
+
+    .access-left {
+      padding: 80px 60px;
+      border-right: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .key-card {
+      position: relative;
+      padding: 36px 40px;
+      border: 1px solid rgba(232, 228, 221, 0.12);
+      width: 100%;
+      max-width: 340px;
+    }
+
+    .kc-corner {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-style: solid;
+      border-color: var(--accent);
+    }
+
+    .kc-corner.tl { top: -1px;    left: -1px;   border-width: 2px 0 0 2px; }
+    .kc-corner.tr { top: -1px;    right: -1px;  border-width: 2px 2px 0 0; }
+    .kc-corner.bl { bottom: -1px; left: -1px;   border-width: 0 0 2px 2px; }
+    .kc-corner.br { bottom: -1px; right: -1px;  border-width: 0 2px 2px 0; }
+
+    .kc-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 0.44em;
+      color: var(--text-dim);
+      margin-bottom: 14px;
+    }
+
+    .kc-code {
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      letter-spacing: 0.12em;
+      color: var(--text-hi);
+      padding-bottom: 20px;
+      margin-bottom: 22px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .kc-tiers { display: flex; flex-direction: column; gap: 10px; }
+
+    .kc-tier {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.13em;
+      color: var(--text-dim);
+    }
+
+    .kc-tier.active { color: var(--text-mid); }
+
+    .kc-tier-name::before { content: '— '; color: var(--accent); }
+
+    .kc-status            { font-size: 7.5px; letter-spacing: 0.2em; }
+    .kc-status.on         { color: var(--accent); }
+    .kc-status.off        { color: var(--text-sub); }
+
+    .access-right {
+      padding: 80px 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .access-tag {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.4em;
+      color: var(--text-dim);
+      margin-bottom: 24px;
+    }
+
+    .access-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(48px, 5.5vw, 72px);
+      letter-spacing: 0.03em;
+      line-height: 1.02;
+      margin-bottom: 28px;
+    }
+
+    .access-body {
+      font-weight: 200;
+      font-size: 15px;
+      line-height: 1.85;
+      color: var(--text-mid);
+      max-width: 380px;
+    }
+
+    /* ─── 06 CTA ─────────────────────────────────────── */
+    #cta {
+      border-top: 1px solid var(--border);
+      min-height: 60vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cta-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 80px 40px;
+      width: 100%;
+      max-width: 680px;
+    }
+
+    .cta-tag {
+      font-family: 'Space Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.44em;
+      color: var(--text-dim);
+      margin-bottom: 24px;
+    }
+
+    .cta-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(64px, 10vw, 120px);
+      letter-spacing: 0.04em;
+      line-height: 1;
+      margin-bottom: 18px;
+    }
+
+    .cta-body {
+      font-weight: 200;
+      font-size: 15px;
+      color: var(--text-mid);
+      margin-bottom: 48px;
+      max-width: 420px;
+    }
+
+    .cta-form {
+      display: flex;
+      width: 100%;
+      max-width: 440px;
+    }
+
+    .cta-input {
+      flex: 1;
+      background: transparent;
+      border: 1px solid rgba(232, 228, 221, 0.18);
+      border-right: none;
+      outline: none;
+      padding: 14px 18px;
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      color: var(--text-hi);
+      caret-color: var(--accent);
+      transition: border-color 0.2s;
+    }
+
+    .cta-input:focus       { border-color: rgba(232, 228, 221, 0.4); }
+    .cta-input::placeholder { color: var(--text-sub); }
+
+    .cta-btn {
+      background: var(--accent);
+      border: 1px solid var(--accent);
+      color: #fff;
+      padding: 14px 26px;
+      font-family: 'Space Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.28em;
+      cursor: none;
+      transition: background 0.25s, color 0.25s;
+    }
+
+    .cta-btn:hover { background: transparent; color: var(--accent); }
+
+    /* ─── 07 TICKER ──────────────────────────────────── */
+    #ticker {
+      border-top: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .ticker-row          { overflow: hidden; }
+    .ticker-row + .ticker-row { border-top: 1px solid var(--border); }
+
+    .ticker-track {
+      display: flex;
+      width: max-content;
+      animation: tick-fwd 34s linear infinite;
+    }
+
+    .ticker-track.rev { animation: tick-rev 34s linear infinite; }
+
+    @keyframes tick-fwd { from { transform: translateX(0); }     to { transform: translateX(-50%); } }
+    @keyframes tick-rev { from { transform: translateX(-50%); }  to { transform: translateX(0); }    }
+
+    .ticker-content {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 13px;
+      letter-spacing: 0.22em;
+      color: var(--text-dim);
+      padding: 13px 0;
+      white-space: nowrap;
+      display: block;
+    }
+
+    .tsep { color: var(--accent); margin: 0 20px; }
+
+    /* ─── FOOTER ─────────────────────────────────────── */
+    #footer {
+      border-top: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      align-items: center;
+      padding: 22px 32px;
+      font-family: 'Space Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 0.26em;
+      color: var(--text-dim);
+    }
+
+    .footer-center { text-align: center; }
+    .footer-right  { text-align: right; }
+  </style>
+</head>
+<body>
+
+  <div id="cursor-dot"></div>
+  <div id="cursor-ring"></div>
+
+  <!-- LOCK SCREEN -->
+  <div id="lock">
+    <canvas id="lock-canvas"></canvas>
+
+    <div id="lock-ui">
+      <div id="lock-icon"></div>
+      <div id="lock-wordmark">KEEP</div>
+      <div id="lock-form">
+        <div id="lock-label">// ACCESS REQUIRED</div>
+        <input id="lock-input" type="password" autocomplete="off" spellcheck="false" autofocus>
+        <div id="lock-error">ACCESS DENIED</div>
+      </div>
+    </div>
+
+    <div id="lock-ver">KEEP SYS v0.1 &nbsp;—&nbsp; LOCKED</div>
+  </div>
+
+  <!-- MAIN SITE -->
+  <div id="main" hidden>
+
+    <nav id="nav">
+      <span class="nav-logo">KEEP</span>
+      <div class="nav-status">
+        <span class="nav-dot"></span>
+        <span>SISTEMA ACTIVO</span>
+      </div>
+      <span class="nav-time" id="nav-time">00:00:00 UTC</span>
+    </nav>
+
+    <aside id="sidebar-left">
+      <span class="sidebar-label">DROP 001</span>
+    </aside>
+    <aside id="sidebar-right">
+      <span class="sidebar-label" id="sidebar-sec">01</span>
+    </aside>
+
+    <main>
+
+      <!-- 01 HERO -->
+      <section id="hero" data-sec="01">
+        <canvas id="hero-canvas"></canvas>
+        <div class="hero-inner">
+          <div class="hero-tag">// 01 — KEEP MOVING</div>
+          <div class="hero-title-wrap">
+            <span class="hero-ghost" aria-hidden="true">KEEP</span>
+            <h1 class="hero-title">KEEP</h1>
+          </div>
+          <div class="hero-sub">LA DISCIPLINA NO ES LINEAL</div>
+          <p class="hero-body">No siempre irá como esperas. El punto es mantener.</p>
+        </div>
+        <div class="hero-scroll">
+          <span class="hero-scroll-label">SCROLL</span>
+          <div class="hero-scroll-line"></div>
+        </div>
+      </section>
+
+      <!-- 02 PILLARS -->
+      <section id="pillars" data-sec="02">
+        <div class="pillar">
+          <div class="pillar-num">01</div>
+          <div class="pillar-name">MOVING</div>
+          <div class="pillar-bar"><div class="pillar-fill" style="width:78%"></div></div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-num">02</div>
+          <div class="pillar-name">BUILDING</div>
+          <div class="pillar-bar"><div class="pillar-fill" style="width:65%"></div></div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-num">03</div>
+          <div class="pillar-name">EXPLORING</div>
+          <div class="pillar-bar"><div class="pillar-fill" style="width:82%"></div></div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-num">04</div>
+          <div class="pillar-name">PUSHING</div>
+          <div class="pillar-bar"><div class="pillar-fill" style="width:71%"></div></div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-num">05</div>
+          <div class="pillar-name">CLIMBING</div>
+          <div class="pillar-bar"><div class="pillar-fill" style="width:59%"></div></div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-num">06</div>
+          <div class="pillar-name">RUNNING</div>
+          <div class="pillar-bar"><div class="pillar-fill" style="width:88%"></div></div>
+        </div>
+      </section>
+
+      <!-- 03 MANIFESTO -->
+      <section id="manifesto" data-sec="03">
+        <div class="mnf-lines">
+          <span class="mnf-line off-1">NO TODO IRARÁ BIEN.</span>
+          <span class="mnf-line off-2">MANTÉN.</span>
+          <span class="mnf-line off-3">NO SIEMPRE SERÁ FÁCIL.</span>
+          <span class="mnf-line off-4">MANTÉN.</span>
+          <span class="mnf-line off-5">HABRÁ DÍAS QUE FALLES.</span>
+          <span class="mnf-line off-6">MANTÉN.</span>
+          <span class="mnf-line off-7">ESO ES KEEP.</span>
+        </div>
+      </section>
+
+      <!-- 04 DROP -->
+      <section id="drop" data-sec="04">
+        <div class="drop-canvas-col">
+          <canvas id="drop-canvas"></canvas>
+        </div>
+        <div class="drop-content">
+          <div class="drop-tag">// DROP 001 — RETO ACTIVO</div>
+          <h2 class="drop-title">KEEP RUNNING</h2>
+          <p class="drop-body">Corre 5km todos los días durante 28 días.<br>Sin excepciones. Sin modificaciones.</p>
+          <div class="drop-rule"></div>
+          <div class="lb-head">
+            <span>RNK</span><span>HANDLE</span><span>DÍAS</span><span>PTS</span>
+          </div>
+          <div class="lb-row">
+            <span class="lb-rank top">01</span>
+            <span>@mantiene_todo</span><span>28</span><span>2,840</span>
+          </div>
+          <div class="lb-row">
+            <span class="lb-rank">02</span>
+            <span>@push_28dias</span><span>26</span><span>2,610</span>
+          </div>
+          <div class="lb-row">
+            <span class="lb-rank">03</span>
+            <span>@keep_climbing</span><span>24</span><span>2,400</span>
+          </div>
+          <div class="lb-row">
+            <span class="lb-rank">04</span>
+            <span>@no_excusas</span><span>22</span><span>2,180</span>
+          </div>
+          <div class="lb-row">
+            <span class="lb-rank">05</span>
+            <span>@la_constancia</span><span>21</span><span>2,050</span>
+          </div>
+          <div class="drop-rule" style="margin-bottom:0"></div>
+          <div class="drop-prize">PREMIO — 1 PIEZA DROP 001 &nbsp;/&nbsp; NÚMERO DE SERIE GRABADO</div>
+        </div>
+      </section>
+
+      <!-- 05 ACCESS -->
+      <section id="access" data-sec="05">
+        <div class="access-left">
+          <div class="key-card">
+            <span class="kc-corner tl"></span>
+            <span class="kc-corner tr"></span>
+            <span class="kc-corner bl"></span>
+            <span class="kc-corner br"></span>
+            <div class="kc-label">ACCESS CREDENTIAL</div>
+            <div class="kc-code">KP-001-██████-ALPHA</div>
+            <div class="kc-tiers">
+              <div class="kc-tier active">
+                <span class="kc-tier-name">ALPHA — FOUNDING</span>
+                <span class="kc-status on">ACTIVO</span>
+              </div>
+              <div class="kc-tier">
+                <span class="kc-tier-name">BETA — EXTENDED</span>
+                <span class="kc-status off">PENDIENTE</span>
+              </div>
+              <div class="kc-tier">
+                <span class="kc-tier-name">FIELD — OPERATIONAL</span>
+                <span class="kc-status off">PENDIENTE</span>
+              </div>
+              <div class="kc-tier">
+                <span class="kc-tier-name">OPEN — STANDARD</span>
+                <span class="kc-status off">PENDIENTE</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="access-right">
+          <div class="access-tag">// 05 — ACCESO</div>
+          <h2 class="access-title">CADA PRENDA<br>ES UNA LLAVE.</h2>
+          <p class="access-body">El acceso a KEEP no se compra por separado. Viene con la prenda. Cada pieza de cada drop incluye su clave única — física, grabada, irrepetible. Cuando termina el drop, la clave se cierra para siempre.</p>
+        </div>
+      </section>
+
+      <!-- 06 CTA -->
+      <section id="cta" data-sec="06">
+        <div class="cta-inner">
+          <div class="cta-tag">// 06 — ÚNETE</div>
+          <h2 class="cta-title">LISTA DE<br>ESPERA</h2>
+          <p class="cta-body">DROP 002 en preparación. Sé el primero en recibir acceso cuando abra la siguiente llave.</p>
+          <form class="cta-form" onsubmit="return false">
+            <input class="cta-input" type="email" placeholder="tu@email.com" autocomplete="off">
+            <button class="cta-btn" type="submit">ACCESO</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- 07 TICKER -->
+      <section id="ticker" data-sec="07">
+        <div class="ticker-row">
+          <div class="ticker-track">
+            <div class="ticker-content">KEEP MOVING<span class="tsep">—</span>KEEP BUILDING<span class="tsep">—</span>KEEP EXPLORING<span class="tsep">—</span>KEEP PUSHING<span class="tsep">—</span>KEEP CLIMBING<span class="tsep">—</span>KEEP RUNNING<span class="tsep">—</span></div>
+            <div class="ticker-content" aria-hidden="true">KEEP MOVING<span class="tsep">—</span>KEEP BUILDING<span class="tsep">—</span>KEEP EXPLORING<span class="tsep">—</span>KEEP PUSHING<span class="tsep">—</span>KEEP CLIMBING<span class="tsep">—</span>KEEP RUNNING<span class="tsep">—</span></div>
+          </div>
+        </div>
+        <div class="ticker-row">
+          <div class="ticker-track rev">
+            <div class="ticker-content">DROP 001<span class="tsep">—</span>KEEP SYSTEM v0.1<span class="tsep">—</span>ACCESO VÍA LLAVE FÍSICA<span class="tsep">—</span>LA DISCIPLINA NO ES LINEAL<span class="tsep">—</span></div>
+            <div class="ticker-content" aria-hidden="true">DROP 001<span class="tsep">—</span>KEEP SYSTEM v0.1<span class="tsep">—</span>ACCESO VÍA LLAVE FÍSICA<span class="tsep">—</span>LA DISCIPLINA NO ES LINEAL<span class="tsep">—</span></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <footer id="footer">
+      <span>KEEP v0.1.0</span>
+      <span class="footer-center">ACCESO VÍA LLAVE FÍSICA</span>
+      <span class="footer-right" id="footer-time">00:00:00 UTC</span>
+    </footer>
+
+  </div>
+
+  <script>
+    /* ── CURSOR ──────────────────────────────────────── */
+    const dot  = document.getElementById('cursor-dot');
+    const ring = document.getElementById('cursor-ring');
+    let mx = 0, my = 0;   /* mouse target */
+    let rx = 0, ry = 0;   /* ring current (lerped) */
+
+    document.addEventListener('mousemove', e => {
+      mx = e.clientX;
+      my = e.clientY;
+      dot.style.left = mx + 'px';
+      dot.style.top  = my + 'px';
+    });
+
+    (function lerpRing() {
+      rx += (mx - rx) * 0.12;
+      ry += (my - ry) * 0.12;
+      ring.style.left = rx + 'px';
+      ring.style.top  = ry + 'px';
+      requestAnimationFrame(lerpRing);
+    })();
+
+    /* ── HERO CANVAS — sine wave interference ───────── */
+    function initHeroCanvas() {
+      const cv  = document.getElementById('hero-canvas');
+      const ctx = cv.getContext('2d');
+      let W, H, t = 0;
+
+      function resize() {
+        W = cv.width  = cv.offsetWidth;
+        H = cv.height = cv.offsetHeight;
+      }
+      resize();
+      window.addEventListener('resize', resize);
+
+      /* 8 waves: amplitude (H ratio), freq, phase offset, speed, opacity */
+      const WAVES = [
+        { a: 0.28, f: 0.0026, ph: 0.00, s:  0.0080, o: 0.065 },
+        { a: 0.15, f: 0.0043, ph: 1.20, s: -0.0060, o: 0.050 },
+        { a: 0.36, f: 0.0017, ph: 2.50, s:  0.0045, o: 0.070 },
+        { a: 0.11, f: 0.0066, ph: 0.80, s: -0.0095, o: 0.045 },
+        { a: 0.22, f: 0.0033, ph: 3.90, s:  0.0070, o: 0.055 },
+        { a: 0.10, f: 0.0055, ph: 1.60, s: -0.0078, o: 0.048 },
+        { a: 0.19, f: 0.0022, ph: 4.30, s:  0.0058, o: 0.062 },
+        { a: 0.14, f: 0.0049, ph: 2.10, s: -0.0085, o: 0.050 },
+      ];
+
+      function draw() {
+        ctx.clearRect(0, 0, W, H);
+        t++;
+        const cy = H * 0.5;
+        WAVES.forEach(w => {
+          ctx.beginPath();
+          for (let x = 0; x <= W; x += 2) {
+            const y = cy + Math.sin(x * w.f + w.ph + t * w.s) * (H * w.a);
+            x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+          }
+          ctx.strokeStyle = `rgba(232,228,221,${w.o})`;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        });
+        requestAnimationFrame(draw);
+      }
+      draw();
+    }
+
+    /* ── MANIFESTO SCROLL REVEAL ─────────────────────── */
+    function initManifesto() {
+      const section = document.getElementById('manifesto');
+      const lines   = section.querySelectorAll('.mnf-line');
+      const obs = new IntersectionObserver(entries => {
+        if (entries[0].isIntersecting) {
+          lines.forEach(l => l.classList.add('in-view'));
+          obs.disconnect();
+        }
+      }, { threshold: 0.2 });
+      obs.observe(section);
+    }
+
+    /* ── DROP CANVAS — vertical streaks ─────────────── */
+    function initDropCanvas() {
+      const cv  = document.getElementById('drop-canvas');
+      const ctx = cv.getContext('2d');
+      let W, H;
+
+      function resize() {
+        W = cv.width  = cv.offsetWidth;
+        H = cv.height = cv.offsetHeight;
+        ctx.fillStyle = '#050505';
+        ctx.fillRect(0, 0, W, H);
+      }
+      resize();
+      new ResizeObserver(resize).observe(cv.parentElement);
+
+      const N = 65;
+      function mkStreak() {
+        return {
+          x:     Math.random() * (W || window.innerWidth * 0.5),
+          y:     -(Math.random() * (H || window.innerHeight)),
+          speed: 1.2 + Math.random() * 3.4,
+          alpha: 0.18 + Math.random() * 0.55,
+          w:     Math.random() < 0.28 ? 2 : 1,
+        };
+      }
+      const streaks = Array.from({ length: N }, mkStreak);
+
+      function draw() {
+        /* fade overlay creates the trail */
+        ctx.fillStyle = 'rgba(5,5,5,0.14)';
+        ctx.fillRect(0, 0, W, H);
+
+        streaks.forEach(s => {
+          s.y += s.speed;
+          if (s.y > H + 4) {
+            s.x     = Math.random() * W;
+            s.y     = -4;
+            s.speed = 1.2 + Math.random() * 3.4;
+            s.alpha = 0.18 + Math.random() * 0.55;
+          }
+          ctx.fillStyle = `rgba(232,228,221,${s.alpha.toFixed(2)})`;
+          ctx.fillRect(Math.floor(s.x), Math.floor(s.y), s.w, 3);
+        });
+
+        requestAnimationFrame(draw);
+      }
+      draw();
+    }
+
+    /* ── UTC CLOCK ───────────────────────────────────── */
+    function initClock() {
+      const navEl    = document.getElementById('nav-time');
+      const footerEl = document.getElementById('footer-time');
+
+      function tick() {
+        const n = new Date();
+        const p = v => String(v).padStart(2, '0');
+        const t = `${p(n.getUTCHours())}:${p(n.getUTCMinutes())}:${p(n.getUTCSeconds())} UTC`;
+        if (navEl)    navEl.textContent    = t;
+        if (footerEl) footerEl.textContent = t;
+      }
+      tick();
+      setInterval(tick, 1000);
+    }
+
+    /* ── SIDEBAR SECTION TRACKER ─────────────────────── */
+    function initSidebarTracker() {
+      const secEl = document.getElementById('sidebar-sec');
+      const secs  = document.querySelectorAll('[data-sec]');
+      const obs   = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+          if (e.isIntersecting) secEl.textContent = e.target.dataset.sec;
+        });
+      }, { threshold: 0.4 });
+      secs.forEach(s => obs.observe(s));
+    }
+
+    /* ── BOOT ALL MAIN SECTIONS ──────────────────────── */
+    function startMainSections() {
+      initHeroCanvas();
+      initDropCanvas();
+      initManifesto();
+      initClock();
+      initSidebarTracker();
+      /* double-RAF: ensures #main is rendered before transition fires */
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        document.getElementById('hero').classList.add('revealed');
+      }));
+    }
+
+    /* ── LOCK SCREEN ─────────────────────────────────── */
+    (function () {
+      const KEYS   = ['PABLO', 'KEEP001', 'DROP001'];
+      const lockEl = document.getElementById('lock');
+      const mainEl = document.getElementById('main');
+      const input  = document.getElementById('lock-input');
+      const errEl  = document.getElementById('lock-error');
+
+      /* — Particle canvas — */
+      const cv  = document.getElementById('lock-canvas');
+      const ctx = cv.getContext('2d');
+      let W, H, animId;
+      const N = 180;
+
+      const nodes = Array.from({ length: N }, () => ({
+        x: 0, y: 0, seeded: false,
+        vx: (Math.random() - 0.5) * 0.38,
+        vy: (Math.random() - 0.5) * 0.38,
+      }));
+
+      function resize() {
+        W = cv.width  = cv.offsetWidth;
+        H = cv.height = cv.offsetHeight;
+        nodes.forEach(n => {
+          if (!n.seeded) {
+            n.x = Math.random() * W;
+            n.y = Math.random() * H;
+            n.seeded = true;
+          }
+        });
+      }
+      resize();
+      window.addEventListener('resize', resize);
+
+      const DIST  = 130;
+      const DIST2 = DIST * DIST;
+      const MOUSE_R2 = 150 * 150;          /* blue zone radius² around cursor */
+      let mxL = -9999, myL = -9999;
+      document.addEventListener('mousemove', e => { mxL = e.clientX; myL = e.clientY; });
+
+      function drawFrame() {
+        ctx.clearRect(0, 0, W, H);
+
+        for (let i = 0; i < N; i++) {
+          const a = nodes[i];
+          a.x += a.vx;
+          a.y += a.vy;
+          if (a.x < 0 || a.x > W) a.vx *= -1;
+          if (a.y < 0 || a.y > H) a.vy *= -1;
+
+          /* connections to subsequent nodes only (avoid double-draw) */
+          for (let j = i + 1; j < N; j++) {
+            const b  = nodes[j];
+            const dx = a.x - b.x, dy = a.y - b.y;
+            const d2 = dx * dx + dy * dy;
+            if (d2 > DIST2) continue;
+
+            const alpha = (1 - d2 / DIST2);
+            const midX  = (a.x + b.x) * 0.5;
+            const midY  = (a.y + b.y) * 0.5;
+            const dmx   = midX - mxL, dmy = midY - myL;
+            const nearCursor = (dmx * dmx + dmy * dmy) < MOUSE_R2;
+
+            ctx.lineWidth = 0.6;
+            ctx.strokeStyle = nearCursor
+              ? `rgba(26,107,255,${(alpha * 0.6).toFixed(3)})`
+              : `rgba(232,228,221,${(alpha * 0.09).toFixed(3)})`;
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+          }
+
+          /* node dot */
+          ctx.beginPath();
+          ctx.arc(a.x, a.y, 1.3, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(232,228,221,0.22)';
+          ctx.fill();
+        }
+
+        animId = requestAnimationFrame(drawFrame);
+      }
+      drawFrame();
+
+      /* — Input handling — */
+      input.addEventListener('input', () => {
+        input.classList.remove('error');
+        errEl.classList.remove('show');
+      });
+
+      input.addEventListener('keydown', e => {
+        if (e.key !== 'Enter') return;
+        const val = input.value.trim().toUpperCase();
+
+        if (KEYS.includes(val)) {
+          /* ✓ correct — open shackle, then fade out */
+          input.disabled = true;
+          lockEl.classList.add('unlocking');
+          setTimeout(() => {
+            lockEl.classList.add('fade-out');
+            lockEl.addEventListener('transitionend', () => {
+              cancelAnimationFrame(animId);
+              lockEl.style.display = 'none';
+              mainEl.removeAttribute('hidden');
+              startMainSections();
+            }, { once: true });
+          }, 500);
+        } else {
+          /* ✗ wrong — shake + red flash */
+          input.value = '';
+          input.classList.remove('error');
+          void input.offsetWidth;            /* force reflow to restart animation */
+          input.classList.add('error');
+          errEl.classList.add('show');
+          setTimeout(() => {
+            input.classList.remove('error');
+            errEl.classList.remove('show');
+          }, 1600);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
