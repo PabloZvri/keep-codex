@@ -1,1474 +1,2692 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KEEP</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
-  <style>
-    /* ─── TOKENS ─────────────────────────────────────── */
-    :root {
-      --bg:       #050505;
-      --text:     #e8e4dd;
-      --accent:   #1a6bff;
-
-      /* text opacity steps */
-      --text-hi:  rgba(232, 228, 221, 0.92);
-      --text-mid: rgba(232, 228, 221, 0.55);
-      --text-dim: rgba(232, 228, 221, 0.28);
-      --text-sub: rgba(232, 228, 221, 0.11);
-
-      /* borders */
-      --border:   rgba(232, 228, 221, 0.06);
-
-      /* layout */
-      --nav-h:    52px;
-      --side-w:   48px;
-    }
-
-    /* ─── RESET ──────────────────────────────────────── */
-    *, *::before, *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    /* ─── BASE ───────────────────────────────────────── */
-    html {
-      scroll-behavior: smooth;
-    }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 200;
-      font-size: 15px;
-      line-height: 1.6;
-      overflow-x: hidden;
-      cursor: none;
-      -webkit-font-smoothing: antialiased;
-    }
-
-    a {
-      color: inherit;
-      text-decoration: none;
-    }
-
-    /* ─── SCROLLBAR ──────────────────────────────────── */
-    ::-webkit-scrollbar       { width: 2px; }
-    ::-webkit-scrollbar-track { background: var(--bg); }
-    ::-webkit-scrollbar-thumb { background: var(--accent); }
-    *                          { scrollbar-width: thin; scrollbar-color: var(--accent) var(--bg); }
-
-    /* ─── TYPOGRAPHY ROLES ───────────────────────────── */
-    /* display headings → Bebas Neue */
-    h1, h2, h3, h4, h5, h6,
-    .t-display {
-      font-family: 'Bebas Neue', sans-serif;
-      font-weight: 400;
-      letter-spacing: 0.04em;
-      line-height: 1;
-    }
-
-    /* data / labels / mono → Space Mono */
-    .t-mono,
-    code,
-    pre {
-      font-family: 'Space Mono', monospace;
-      font-weight: 400;
-    }
-
-    /* body copy → DM Sans 200 (inherits from body) */
-    .t-body {
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 200;
-    }
-
-    /* ─── NAV ────────────────────────────────────────── */
-    #nav {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: var(--nav-h);
-      background: var(--bg);
-      border-bottom: 1px solid var(--border);
-      z-index: 1000;
-    }
-
-    /* ─── SIDEBARS ───────────────────────────────────── */
-    #sidebar-left,
-    #sidebar-right {
-      position: fixed;
-      top: 0;
-      bottom: 0;
-      width: var(--side-w);
-      background: var(--bg);
-      z-index: 900;
-    }
-
-    #sidebar-left  { left: 0;  border-right: 1px solid var(--border); }
-    #sidebar-right { right: 0; border-left:  1px solid var(--border); }
-
-    /* ─── CONTENT AREA ───────────────────────────────── */
-    main {
-      margin: 0 var(--side-w);
-      padding-top: var(--nav-h);
-    }
-
-    #footer {
-      margin: 0 var(--side-w);
-    }
-
-    /* ─── CURSOR ─────────────────────────────────────── */
-    #cursor-dot,
-    #cursor-ring {
-      position: fixed;
-      top: 0;
-      left: 0;
-      pointer-events: none;
-      transform: translate(-50%, -50%);
-      will-change: transform, left, top;
-    }
-
-    #cursor-dot {
-      width: 6px;
-      height: 6px;
-      background: var(--accent);
-      border-radius: 50%;
-      z-index: 10000;
-    }
-
-    #cursor-ring {
-      width: 26px;
-      height: 26px;
-      border: 1px solid rgba(26, 107, 255, 0.5);
-      border-radius: 50%;
-      z-index: 9999;
-      transition: width 0.2s ease, height 0.2s ease, border-color 0.2s ease;
-    }
-
-    /* ring expands on interactive elements */
-    body:has(a:hover, button:hover, [role="button"]:hover) #cursor-ring {
-      width: 40px;
-      height: 40px;
-      border-color: rgba(26, 107, 255, 0.8);
-    }
-
-    /* ─── LOCK SCREEN ────────────────────────────────── */
-    #lock {
-      position: fixed;
-      inset: 0;
-      z-index: 5000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--bg);
-      transition: opacity 0.7s ease;
-    }
-
-    #lock.fade-out {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    #lock-canvas {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-    }
-
-    #lock-ui {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 44px;
-    }
-
-    /* CSS lock icon — body + angular shackle, zero libraries */
-    #lock-icon {
-      position: relative;
-      width: 28px;
-      height: 22px;
-      border: 1.5px solid var(--text-dim);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: border-color 0.3s;
-    }
-
-    #lock-icon::before {                    /* shackle: angular U */
-      content: '';
-      position: absolute;
-      top: -16px;
-      left: 5px;
-      right: 5px;
-      height: 15px;
-      border: 1.5px solid var(--text-dim);
-      border-bottom: none;
-      transition: border-color 0.3s, transform 0.38s ease;
-    }
-
-    #lock-icon::after {                     /* keyhole pip */
-      content: '';
-      width: 5px;
-      height: 5px;
-      background: var(--text-dim);
-      transition: background 0.3s;
-    }
-
-    #lock.unlocking #lock-icon            { border-color: var(--accent); }
-    #lock.unlocking #lock-icon::before    { border-color: var(--accent); transform: translateY(-9px); }
-    #lock.unlocking #lock-icon::after     { background: var(--accent); }
-
-    #lock-wordmark {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: clamp(64px, 11vw, 108px);
-      letter-spacing: 0.14em;
-      color: var(--text);
-      line-height: 1;
-      user-select: none;
-    }
-
-    #lock-form {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-    }
-
-    #lock-label {
-      font-family: 'Space Mono', monospace;
-      font-size: 9px;
-      letter-spacing: 0.44em;
-      color: var(--text-dim);
-    }
-
-    #lock-input {
-      background: transparent;
-      border: none;
-      border-bottom: 1px solid rgba(232, 228, 221, 0.18);
-      outline: none;
-      width: 220px;
-      padding: 10px 0;
-      text-align: center;
-      font-family: 'Space Mono', monospace;
-      font-size: 14px;
-      letter-spacing: 0.5em;
-      color: var(--text-hi);
-      caret-color: var(--accent);
-      transition: border-color 0.2s;
-    }
-
-    #lock-input:focus  { border-bottom-color: var(--text-mid); }
-
-    #lock-input.error {
-      border-bottom-color: #e02020;
-      animation: lock-shake 0.42s ease;
-    }
-
-    @keyframes lock-shake {
-      0%, 100% { transform: translateX(0); }
-      16%      { transform: translateX(-10px); }
-      33%      { transform: translateX(9px); }
-      50%      { transform: translateX(-7px); }
-      66%      { transform: translateX(5px); }
-      83%      { transform: translateX(-2px); }
-    }
-
-    #lock-error {
-      font-family: 'Space Mono', monospace;
-      font-size: 9px;
-      letter-spacing: 0.3em;
-      color: transparent;
-      height: 14px;
-      transition: color 0.15s;
-    }
-
-    #lock-error.show { color: #e02020; }
-
-    #lock-ver {
-      position: absolute;
-      bottom: 22px;
-      left: 26px;
-      font-family: 'Space Mono', monospace;
-      font-size: 8px;
-      letter-spacing: 0.22em;
-      color: var(--text-sub);
-    }
-
-    /* ─── 01 HERO ────────────────────────────────────── */
-    #hero {
-      position: relative;
-      height: 100vh;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    #hero-canvas {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-    }
-
-    .hero-inner {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-    }
-
-    .hero-tag {
-      font-family: 'Space Mono', monospace;
-      font-size: 9px;
-      letter-spacing: 0.44em;
-      color: var(--text-dim);
-      margin-bottom: 22px;
-      opacity: 0;
-      transform: translateY(8px);
-      transition: opacity 0.6s ease 0.0s, transform 0.6s ease 0.0s;
-    }
-
-    .hero-title-wrap {
-      position: relative;
-      display: inline-block;
-      line-height: 1;
-    }
-
-    .hero-ghost {
-      position: absolute;
-      top: 0;
-      left: 0;
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: clamp(80px, 18vw, 220px);
-      letter-spacing: 0.12em;
-      line-height: 1;
-      color: transparent;
-      -webkit-text-stroke: 1px rgba(232, 228, 221, 0.08);
-      transform: translate(5px, 5px);
-      pointer-events: none;
-      user-select: none;
-      white-space: nowrap;
-    }
-
-    .hero-title {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: clamp(80px, 18vw, 220px);
-      letter-spacing: 0.12em;
-      color: var(--text);
-      line-height: 1;
-      position: relative;
-      white-space: nowrap;
-      opacity: 0;
-      transform: translateY(22px);
-      transition: opacity 0.85s ease 0.1s, transform 0.85s ease 0.1s;
-    }
-
-    .hero-sub {
-      font-family: 'Space Mono', monospace;
-      font-size: 11px;
-      letter-spacing: 0.38em;
-      color: var(--text-mid);
-      margin-top: 30px;
-      opacity: 0;
-      transform: translateY(8px);
-      transition: opacity 0.7s ease 0.4s, transform 0.7s ease 0.4s;
-    }
-
-    .hero-body {
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 200;
-      font-size: 14px;
-      color: var(--text-dim);
-      margin-top: 10px;
-      letter-spacing: 0.03em;
-      opacity: 0;
-      transform: translateY(6px);
-      transition: opacity 0.7s ease 0.65s, transform 0.7s ease 0.65s;
-    }
-
-    .hero-scroll {
-      position: absolute;
-      bottom: 32px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      opacity: 0;
-      transition: opacity 0.6s ease 1.05s;
-    }
-
-    .hero-scroll-label {
-      font-family: 'Space Mono', monospace;
-      font-size: 8px;
-      letter-spacing: 0.32em;
-      color: var(--text-sub);
-    }
-
-    .hero-scroll-line {
-      width: 1px;
-      height: 52px;
-      background: var(--text-dim);
-      animation: hero-tick 2.2s ease-in-out infinite;
-    }
-
-    @keyframes hero-tick {
-      0%, 100% { opacity: 0.3; }
-      50%       { opacity: 0.85; }
-    }
-
-    #hero.revealed .hero-tag,
-    #hero.revealed .hero-title,
-    #hero.revealed .hero-sub,
-    #hero.revealed .hero-body  { opacity: 1; transform: translateY(0); }
-    #hero.revealed .hero-scroll { opacity: 1; }
-
-    /* ─── 02 PILLARS ─────────────────────────────────── */
-    #pillars {
-      display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      border-top: 1px solid var(--border);
-    }
-
-    .pillar {
-      position: relative;
-      padding: 28px 22px 24px;
-      border-right: 1px solid var(--border);
-      min-height: 168px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      overflow: hidden;
-      transition: background 0.3s;
-      cursor: default;
-    }
-
-    .pillar:last-child { border-right: none; }
-    .pillar:hover      { background: rgba(232, 228, 221, 0.014); }
-
-    /* accent bar sweeps in from left on hover */
-    .pillar::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 1px;
-      background: var(--accent);
-      transform: scaleX(0);
-      transform-origin: left;
-      transition: transform 0.38s ease;
-    }
-
-    .pillar:hover::before { transform: scaleX(1); }
-
-    /* stagger: even columns sit lower */
-    .pillar:nth-child(2) { padding-top: 44px; }
-    .pillar:nth-child(4) { padding-top: 50px; }
-    .pillar:nth-child(6) { padding-top: 38px; }
-
-    .pillar-num {
-      font-family: 'Space Mono', monospace;
-      font-size: 8px;
-      letter-spacing: 0.2em;
-      color: var(--text-dim);
-    }
-
-    .pillar-name {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 20px;
-      letter-spacing: 0.06em;
-      color: rgba(232, 228, 221, 0.38);
-      flex: 1;
-      display: flex;
-      align-items: flex-end;
-      padding-bottom: 8px;
-      transition: color 0.3s;
-    }
-
-    .pillar:hover .pillar-name { color: var(--text); }
-
-    .pillar-bar {
-      height: 1px;
-      background: var(--border);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .pillar-fill {
-      position: absolute;
-      top: 0; bottom: 0; left: 0;
-      background: rgba(232, 228, 221, 0.28);
-      transition: background 0.3s, width 0.55s ease;
-    }
-
-    .pillar:hover .pillar-fill { background: var(--accent); }
-
-    /* ─── 03 MANIFESTO ───────────────────────────────── */
-    #manifesto {
-      position: relative;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      border-top: 1px solid var(--border);
-      padding: 100px 8vw;
-      overflow: hidden;
-    }
-
-    .mnf-lines {
-      position: relative;
-      z-index: 1;
-      width: 100%;
-    }
-
-    .mnf-line {
-      display: block;
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: clamp(44px, 6.8vw, 86px);
-      letter-spacing: 0.02em;
-      line-height: 1.12;
-      opacity: 0;
-      transform: translateY(22px);
-      transition: opacity 0.7s ease, transform 0.7s ease;
-    }
-
-    .mnf-line.in-view { opacity: 1; transform: translateY(0); }
-
-    /* cascade delay */
-    .mnf-line:nth-child(1) { transition-delay:   0ms; }
-    .mnf-line:nth-child(2) { transition-delay:  90ms; }
-    .mnf-line:nth-child(3) { transition-delay: 180ms; }
-    .mnf-line:nth-child(4) { transition-delay: 270ms; }
-    .mnf-line:nth-child(5) { transition-delay: 360ms; }
-    .mnf-line:nth-child(6) { transition-delay: 450ms; }
-    .mnf-line:nth-child(7) { transition-delay: 540ms; }
-
-    /* misalignment grid */
-    .mnf-line.off-1 { margin-left: 0;     color: var(--text-hi); }
-    .mnf-line.off-2 { margin-left: 9vw;   color: rgba(232,228,221,0.60); }
-    .mnf-line.off-3 { margin-left: 3vw;   color: var(--text-hi); }
-    .mnf-line.off-4 { margin-left: 19vw;  color: rgba(232,228,221,0.60); }
-    .mnf-line.off-5 { margin-left: 1vw;   color: var(--text-hi); }
-    .mnf-line.off-6 { margin-left: 29vw;  color: rgba(232,228,221,0.60); }
-    .mnf-line.off-7 { margin-left: 7vw;   color: var(--accent); margin-top: 36px; }
-
-    /* ─── NAV INNER ──────────────────────────────────── */
-    #nav {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 24px;
-    }
-
-    .nav-logo {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 17px;
-      letter-spacing: 0.14em;
-    }
-
-    .nav-status {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-family: 'Space Mono', monospace;
-      font-size: 8px;
-      letter-spacing: 0.26em;
-      color: var(--text-mid);
-    }
-
-    .nav-dot {
-      width: 5px;
-      height: 5px;
-      background: var(--accent);
-      border-radius: 50%;
-      animation: dot-pulse 2.4s ease-in-out infinite;
-    }
-
-    @keyframes dot-pulse {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: 0.22; }
-    }
-
-    .nav-time {
-      font-family: 'Space Mono', monospace;
-      font-size: 9px;
-      letter-spacing: 0.16em;
-      color: var(--text-dim);
-      min-width: 120px;
-      text-align: right;
-    }
-
-    /* ─── SIDEBAR INNER ──────────────────────────────── */
-    #sidebar-left,
-    #sidebar-right {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .sidebar-label {
-      font-family: 'Space Mono', monospace;
-      font-size: 7.5px;
-      letter-spacing: 0.28em;
-      color: var(--text-dim);
-      writing-mode: vertical-lr;
-    }
-
-    #sidebar-left .sidebar-label { transform: rotate(180deg); }
-
-    /* ─── 04 DROP ────────────────────────────────────── */
-    #drop {
-      position: relative;
-      min-height: 100vh;
-      border-top: 1px solid var(--border);
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-    }
-
-    .drop-canvas-col {
-      position: relative;
-      overflow: hidden;
-    }
-
-    #drop-canvas {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-    }
-
-    .drop-content {
-      padding: 80px 60px;
-      border-left: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
-
-    .drop-tag {
-      font-family: 'Space Mono', monospace;
-      font-size: 9px;
-      letter-spacing: 0.4em;
-      color: var(--text-dim);
-      margin-bottom: 18px;
-    }
-
-    .drop-title {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: clamp(52px, 6.5vw, 88px);
-      letter-spacing: 0.03em;
-      line-height: 1;
-      margin-bottom: 20px;
-    }
-
-    .drop-body {
-      font-weight: 200;
-      font-size: 15px;
-      color: var(--text-mid);
-      line-height: 1.75;
-      max-width: 340px;
-    }
-
-    .drop-rule {
-      height: 1px;
-      background: var(--border);
-      margin: 30px 0;
-    }
-
-    .lb-head {
-      display: grid;
-      grid-template-columns: 36px 1fr 50px 72px;
-      font-family: 'Space Mono', monospace;
-      font-size: 8px;
-      letter-spacing: 0.28em;
-      color: var(--text-dim);
-      padding-bottom: 10px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .lb-row {
-      display: grid;
-      grid-template-columns: 36px 1fr 50px 72px;
-      font-family: 'Space Mono', monospace;
-      font-size: 10px;
-      letter-spacing: 0.09em;
-      color: var(--text-dim);
-      padding: 10px 0;
-      border-bottom: 1px solid var(--border);
-      align-items: center;
-      transition: color 0.25s;
-    }
-
-    .lb-row:hover  { color: var(--text-mid); }
-    .lb-rank.top   { color: var(--accent); }
-
-    .drop-prize {
-      font-family: 'Space Mono', monospace;
-      font-size: 8px;
-      letter-spacing: 0.2em;
-      color: var(--text-sub);
-      margin-top: 14px;
-    }
-
-    /* ─── 05 ACCESS ──────────────────────────────────── */
-    #access {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      border-top: 1px solid var(--border);
-      min-height: 520px;
-    }
-
-    .access-left {
-      padding: 80px 60px;
-      border-right: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .key-card {
-      position: relative;
-      padding: 36px 40px;
-      border: 1px solid rgba(232, 228, 221, 0.12);
-      width: 100%;
-      max-width: 340px;
-    }
-
-    .kc-corner {
-      position: absolute;
-      width: 14px;
-      height: 14px;
-      border-style: solid;
-      border-color: var(--accent);
-    }
-
-    .kc-corner.tl { top: -1px;    left: -1px;   border-width: 2px 0 0 2px; }
-    .kc-corner.tr { top: -1px;    right: -1px;  border-width: 2px 2px 0 0; }
-    .kc-corner.bl { bottom: -1px; left: -1px;   border-width: 0 0 2px 2px; }
-    .kc-corner.br { bottom: -1px; right: -1px;  border-width: 0 2px 2px 0; }
-
-    .kc-label {
-      font-family: 'Space Mono', monospace;
-      font-size: 8px;
-      letter-spacing: 0.44em;
-      color: var(--text-dim);
-      margin-bottom: 14px;
-    }
-
-    .kc-code {
-      font-family: 'Space Mono', monospace;
-      font-size: 13px;
-      letter-spacing: 0.12em;
-      color: var(--text-hi);
-      padding-bottom: 20px;
-      margin-bottom: 22px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .kc-tiers { display: flex; flex-direction: column; gap: 10px; }
-
-    .kc-tier {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-family: 'Space Mono', monospace;
-      font-size: 9px;
-      letter-spacing: 0.13em;
-      color: var(--text-dim);
-    }
-
-    .kc-tier.active { color: var(--text-mid); }
-
-    .kc-tier-name::before { content: '— '; color: var(--accent); }
-
-    .kc-status            { font-size: 7.5px; letter-spacing: 0.2em; }
-    .kc-status.on         { color: var(--accent); }
-    .kc-status.off        { color: var(--text-sub); }
-
-    .access-right {
-      padding: 80px 60px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-    }
-
-    .access-tag {
-      font-family: 'Space Mono', monospace;
-      font-size: 9px;
-      letter-spacing: 0.4em;
-      color: var(--text-dim);
-      margin-bottom: 24px;
-    }
-
-    .access-title {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: clamp(48px, 5.5vw, 72px);
-      letter-spacing: 0.03em;
-      line-height: 1.02;
-      margin-bottom: 28px;
-    }
-
-    .access-body {
-      font-weight: 200;
-      font-size: 15px;
-      line-height: 1.85;
-      color: var(--text-mid);
-      max-width: 380px;
-    }
-
-    /* ─── 06 CTA ─────────────────────────────────────── */
-    #cta {
-      border-top: 1px solid var(--border);
-      min-height: 60vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .cta-inner {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      padding: 80px 40px;
-      width: 100%;
-      max-width: 680px;
-    }
-
-    .cta-tag {
-      font-family: 'Space Mono', monospace;
-      font-size: 9px;
-      letter-spacing: 0.44em;
-      color: var(--text-dim);
-      margin-bottom: 24px;
-    }
-
-    .cta-title {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: clamp(64px, 10vw, 120px);
-      letter-spacing: 0.04em;
-      line-height: 1;
-      margin-bottom: 18px;
-    }
-
-    .cta-body {
-      font-weight: 200;
-      font-size: 15px;
-      color: var(--text-mid);
-      margin-bottom: 48px;
-      max-width: 420px;
-    }
-
-    .cta-form {
-      display: flex;
-      width: 100%;
-      max-width: 440px;
-    }
-
-    .cta-input {
-      flex: 1;
-      background: transparent;
-      border: 1px solid rgba(232, 228, 221, 0.18);
-      border-right: none;
-      outline: none;
-      padding: 14px 18px;
-      font-family: 'Space Mono', monospace;
-      font-size: 10px;
-      letter-spacing: 0.1em;
-      color: var(--text-hi);
-      caret-color: var(--accent);
-      transition: border-color 0.2s;
-    }
-
-    .cta-input:focus       { border-color: rgba(232, 228, 221, 0.4); }
-    .cta-input::placeholder { color: var(--text-sub); }
-
-    .cta-btn {
-      background: var(--accent);
-      border: 1px solid var(--accent);
-      color: #fff;
-      padding: 14px 26px;
-      font-family: 'Space Mono', monospace;
-      font-size: 10px;
-      letter-spacing: 0.28em;
-      cursor: none;
-      transition: background 0.25s, color 0.25s;
-    }
-
-    .cta-btn:hover { background: transparent; color: var(--accent); }
-
-    /* ─── 07 TICKER ──────────────────────────────────── */
-    #ticker {
-      border-top: 1px solid var(--border);
-      overflow: hidden;
-    }
-
-    .ticker-row          { overflow: hidden; }
-    .ticker-row + .ticker-row { border-top: 1px solid var(--border); }
-
-    .ticker-track {
-      display: flex;
-      width: max-content;
-      animation: tick-fwd 34s linear infinite;
-    }
-
-    .ticker-track.rev { animation: tick-rev 34s linear infinite; }
-
-    @keyframes tick-fwd { from { transform: translateX(0); }     to { transform: translateX(-50%); } }
-    @keyframes tick-rev { from { transform: translateX(-50%); }  to { transform: translateX(0); }    }
-
-    .ticker-content {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 13px;
-      letter-spacing: 0.22em;
-      color: var(--text-dim);
-      padding: 13px 0;
-      white-space: nowrap;
-      display: block;
-    }
-
-    .tsep { color: var(--accent); margin: 0 20px; }
-
-    /* ─── FOOTER ─────────────────────────────────────── */
-    #footer {
-      border-top: 1px solid var(--border);
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      align-items: center;
-      padding: 22px 32px;
-      font-family: 'Space Mono', monospace;
-      font-size: 8px;
-      letter-spacing: 0.26em;
-      color: var(--text-dim);
-    }
-
-    .footer-center { text-align: center; }
-    .footer-right  { text-align: right; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KEEP — DROP 001</title>
+<meta name="description" content="DROP 001 — KEEP RUNNING. Edición limitada 50 sets numerados. Maratón Puebla, 4 nov 2026.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@300;400;500;600;700;800&family=Sora:wght@300;400;500;600;700&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/*
+┌──────────────────────────────────────────────────────────┐
+│  @font-face HOOK — sustituir Orbitron por fuente custom  │
+└──────────────────────────────────────────────────────────┘
+@font-face {
+  font-family: 'KEEPCustom';
+  src: url('./fonts/keep-custom.woff2') format('woff2'),
+       url('./fonts/keep-custom.woff')  format('woff');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+Después: cambiar --font-display a 'KEEPCustom', sans-serif
+*/
+
+/* ── TOKENS ───────────────────────────────────────────── */
+:root {
+  --black  : #000000;
+  --bone   : #F4F1EA;
+  --white  : #FFFFFF;
+  --mid    : #7a7870;
+
+  --bone-90 : rgba(244,241,234,0.90);
+  --bone-60 : rgba(244,241,234,0.60);
+  --bone-35 : rgba(244,241,234,0.35);
+  --bone-15 : rgba(244,241,234,0.15);
+  --bone-08 : rgba(244,241,234,0.08);
+  --bone-04 : rgba(244,241,234,0.04);
+
+  --font-display : 'Oxanium', 'Orbitron', sans-serif;
+  --font-body    : 'Sora', 'Inter', sans-serif;
+  --font-mono    : 'Rajdhani', 'Sora', sans-serif;
+
+  --s1: 8px;  --s2: 16px; --s3: 24px; --s4: 32px;
+  --s5: 48px; --s6: 64px; --s7: 96px; --s8: 128px;
+
+  --ease-out : cubic-bezier(0.16,1,0.3,1);
+}
+
+/* ── RESET ────────────────────────────────────────────── */
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--black);
+  color: var(--bone);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+button { font-family: inherit; }
+a { color: inherit; text-decoration: none; }
+
+/* ── GATE ─────────────────────────────────────────────── */
+#gate {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: var(--black);
+  display: grid;
+  grid-template-rows: 1fr auto auto;
+  padding: var(--s5) var(--s4) var(--s4);
+  gap: var(--s5);
+  transition: opacity 0.9s var(--ease-out), transform 0.9s var(--ease-out);
+}
+#gate.exiting {
+  opacity: 0;
+  transform: scale(0.975);
+  pointer-events: none;
+}
+
+.gate-symbol {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  opacity: 0;
+  animation: rise 1.4s var(--ease-out) 0.2s forwards;
+}
+.gate-symbol svg {
+  width: clamp(140px, 35vw, 260px);
+  height: auto;
+}
+
+.gate-copy {
+  opacity: 0;
+  animation: rise 1s var(--ease-out) 0.9s forwards;
+}
+.gate-headline {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(1.6rem, 5.5vw, 4rem);
+  letter-spacing: -0.025em;
+  text-transform: uppercase;
+  line-height: 1.05;
+  color: var(--bone-60);
+  margin-bottom: var(--s5);
+  max-width: 18ch;
+}
+.gate-headline em {
+  color: var(--bone);
+  font-style: normal;
+}
+
+.gate-form {
+  display: flex;
+  max-width: 460px;
+  margin-bottom: var(--s2);
+}
+.gate-input {
+  flex: 1;
+  background: transparent;
+  border: 1px solid var(--bone-35);
+  border-right: none;
+  color: var(--bone);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 14px var(--s3);
+  outline: none;
+  min-height: 48px;
+  transition: border-color 0.2s ease;
+}
+.gate-input::placeholder { color: rgba(244,241,234,0.22); }
+.gate-input:focus { border-color: var(--bone-90); }
+.gate-input.error { border-color: var(--bone); animation: shake 0.32s ease; }
+
+.gate-btn {
+  background: var(--bone);
+  color: var(--black);
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 14px var(--s3);
+  cursor: pointer;
+  min-height: 48px;
+  min-width: 48px;
+  transition: background 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+.gate-btn:hover {
+  background: transparent;
+  color: var(--bone);
+  border: 1px solid var(--bone-35);
+  border-left: none;
+}
+.gate-btn:active { transform: scale(0.97); }
+
+.gate-error {
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--bone-60);
+  min-height: 1rem;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.gate-error.show { opacity: 1; }
+
+.gate-footer {
+  opacity: 0;
+  animation: rise 1s var(--ease-out) 1.4s forwards;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  border-top: 1px solid var(--bone-08);
+  padding-top: var(--s3);
+}
+.gate-drop-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: rgba(244,241,234,0.28);
+}
+.gate-countdown {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: rgba(244,241,234,0.4);
+  font-variant-numeric: tabular-nums;
+}
+.gate-countdown .n {
+  font-weight: 700;
+  color: var(--bone);
+}
+
+/* ── HOME ─────────────────────────────────────────────── */
+#home { display: none; }
+#home.on { display: block; }
+
+/* ── BAND A: HERO ─────────────────────────────────────── */
+.band-hero {
+  position: relative;
+  height: 100dvh;
+  min-height: 600px;
+  overflow: hidden;
+  background: var(--black);
+}
+
+#runner-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Topographic lines overlay */
+#topo-svg {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 45%;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.18;
+}
+
+/* HUD elements */
+.hud-tl {
+  position: absolute;
+  top: var(--s4);
+  left: var(--s4);
+  z-index: 3;
+  opacity: 0;
+  animation: rise 1s var(--ease-out) 0.3s forwards;
+}
+.hud-coord {
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(244,241,234,0.35);
+  line-height: 1.8;
+  font-variant-numeric: tabular-nums;
+}
+.hud-coord-line {
+  display: block;
+}
+
+/* Top nav bar */
+.hud-nav {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--s3) var(--s4);
+  border-bottom: 1px solid var(--bone-08);
+  opacity: 0;
+  animation: rise 0.8s var(--ease-out) 0.1s forwards;
+}
+.nav-brand {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 0.85rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--bone);
+}
+.nav-links {
+  display: flex;
+  gap: var(--s4);
+  list-style: none;
+}
+.nav-links a {
+  font-size: 0.58rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(244,241,234,0.4);
+  transition: color 0.15s;
+}
+.nav-links a:hover { color: var(--bone); }
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+}
+.nav-sign {
+  font-size: 0.58rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(244,241,234,0.4);
+}
+.nav-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--bone);
+  opacity: 0.6;
+}
+
+@media (max-width: 767px) {
+  .nav-links { display: none; }
+  .nav-sign { display: none; }
+}
+
+/* Data panel top-right */
+.hud-tr {
+  position: absolute;
+  top: 70px;
+  right: var(--s4);
+  z-index: 3;
+  width: clamp(180px, 22vw, 260px);
+  opacity: 0;
+  animation: rise 1s var(--ease-out) 0.6s forwards;
+}
+.hud-panel {
+  border: 1px solid var(--bone-08);
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(4px);
+  padding: var(--s2);
+}
+.hud-panel-label {
+  font-size: 0.5rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(244,241,234,0.35);
+  margin-bottom: 6px;
+  display: block;
+}
+.hud-panel-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--bone);
+  margin-bottom: 2px;
+  display: block;
+}
+.hud-panel-sub {
+  font-size: 0.52rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(244,241,234,0.35);
+  margin-bottom: var(--s2);
+  display: block;
+}
+.hud-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 4px 0;
+  border-top: 1px solid var(--bone-04);
+}
+.hud-stat-key {
+  font-size: 0.48rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(244,241,234,0.35);
+}
+.hud-stat-val {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  color: var(--bone);
+  font-variant-numeric: tabular-nums;
+}
+.hud-waveform {
+  margin-top: var(--s1);
+  height: 28px;
+  display: block;
+  width: 100%;
+  opacity: 0.5;
+}
+
+@media (max-width: 767px) {
+  .hud-tr { display: none; }
+}
+
+/* KEEP wordmark */
+.hero-wordmark {
+  position: absolute;
+  z-index: 2;
+  top: 70px;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-display);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.04em;
+  color: var(--bone);
+  line-height: 0.88;
+  padding: var(--s5) 0 var(--s4) var(--s4);
+  opacity: 0;
+  animation: rise 1.2s var(--ease-out) 0.1s forwards;
+  mix-blend-mode: normal;
+}
+.hero-wordmark span {
+  display: block;
+  font-size: clamp(3.5rem, 9.5vw, 10.5rem);
+}
+
+@media (max-width: 767px) {
+  .hero-wordmark {
+    flex-direction: row;
+    top: 60px;
+    padding: var(--s3) var(--s3);
+    gap: 0.04em;
+  }
+  .hero-wordmark span { font-size: clamp(3rem, 19vw, 6rem); }
+}
+
+.hero-tagline {
+  position: absolute;
+  z-index: 2;
+  bottom: var(--s6);
+  left: var(--s4);
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(1.1rem, 3vw, 2.6rem);
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: var(--bone);
+  line-height: 1.08;
+  max-width: 22ch;
+  opacity: 0;
+  animation: rise 1s var(--ease-out) 0.5s forwards;
+}
+
+.hero-scroll-hint {
+  position: absolute;
+  z-index: 2;
+  bottom: var(--s4);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  opacity: 0;
+  animation: rise 1s var(--ease-out) 1.6s forwards;
+}
+.hero-scroll-label {
+  font-size: 0.5rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(244,241,234,0.3);
+}
+.hero-scroll-line {
+  width: 1px;
+  height: 28px;
+  background: linear-gradient(to bottom, rgba(244,241,234,0.3), transparent);
+  animation: pulse-line 2s ease-in-out infinite;
+}
+@keyframes pulse-line {
+  0%, 100% { opacity: 0.4; transform: scaleY(1); }
+  50% { opacity: 0.8; transform: scaleY(1.15); }
+}
+
+.hero-drop-tag {
+  position: absolute;
+  z-index: 2;
+  bottom: var(--s6);
+  right: var(--s4);
+  font-size: 0.58rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--bone-35);
+  writing-mode: vertical-rl;
+  opacity: 0;
+  animation: rise 1s var(--ease-out) 0.8s forwards;
+}
+
+/* Crosshair markers */
+.hud-cross {
+  position: absolute;
+  z-index: 2;
+  font-size: 0.9rem;
+  color: rgba(244,241,234,0.12);
+  pointer-events: none;
+  line-height: 1;
+}
+
+/* ── MARQUEE ──────────────────────────────────────────── */
+.marquee-wrap {
+  overflow: hidden;
+  background: #0a0a0a;
+  border-top: 1px solid var(--bone-08);
+  border-bottom: 1px solid var(--bone-08);
+}
+.marquee-track {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: scroll-left 22s linear infinite;
+  will-change: transform;
+}
+.marquee-item {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--bone-60);
+  padding: 10px 28px;
+}
+.marquee-sep {
+  font-size: 0.68rem;
+  color: var(--bone-15);
+  padding: 10px 0;
+  align-self: center;
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track { animation: none; }
+}
+
+/* ── BAND B: DATA / MANIFESTO ─────────────────────────── */
+.band-data {
+  position: relative;
+  background: var(--black);
+  padding: var(--s8) var(--s4);
+  overflow: hidden;
+  border-top: 1px solid var(--bone-08);
+}
+.wave-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.05;
+}
+.point-cloud-canvas {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.10;
+  width: min(38vw, 380px);
+  height: auto;
+}
+.data-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr;
+  max-width: 1100px;
+}
+@media (min-width: 768px) {
+  .data-grid { grid-template-columns: 1.2fr 1fr 1fr; }
+}
+.data-col {
+  padding: var(--s5) var(--s4) var(--s5) 0;
+  border-top: 1px solid var(--bone-08);
+}
+@media (min-width: 768px) {
+  .data-col { border-top: none; }
+  .data-col:not(:first-child) {
+    border-left: 1px solid var(--bone-08);
+    padding-left: var(--s5);
+  }
+  .data-col:first-child { padding-left: 0; }
+}
+.col-label {
+  display: block;
+  font-size: 0.56rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--bone-35);
+  margin-bottom: var(--s4);
+}
+.col-manifesto {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(1.8rem, 4.5vw, 3.8rem);
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  color: var(--bone);
+  line-height: 1.0;
+  margin-bottom: var(--s4);
+}
+.col-body {
+  font-size: 0.75rem;
+  line-height: 1.9;
+  color: rgba(244,241,234,0.38);
+  max-width: 26ch;
+}
+.stat-num {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(2.8rem, 7vw, 5.5rem);
+  letter-spacing: -0.04em;
+  color: var(--bone);
+  line-height: 0.9;
+  margin-bottom: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.stat-num.accent { color: var(--bone-90); }
+.stat-label {
+  display: block;
+  font-size: 0.56rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: rgba(244,241,234,0.28);
+  margin-bottom: var(--s4);
+}
+.location-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.2rem, 2.8vw, 2rem);
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: var(--bone);
+  line-height: 1.3;
+}
+.location-sep {
+  display: block;
+  width: 20px;
+  height: 1px;
+  background: var(--bone-35);
+  margin: var(--s2) 0;
+}
+
+/* ── BAND C: DROP 001 ─────────────────────────────────── */
+.band-drop {
+  position: relative;
+  background: var(--black);
+  padding: var(--s8) var(--s4);
+  border-top: 1px solid var(--bone-08);
+}
+.drop-kicker {
+  font-size: 0.58rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--bone-35);
+  margin-bottom: var(--s2);
+}
+.drop-title {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(3.2rem, 11vw, 9rem);
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+  color: var(--bone);
+  line-height: 0.88;
+  margin-bottom: var(--s7);
+}
+.drop-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--s6);
+  align-items: start;
+}
+@media (min-width: 768px) {
+  .drop-layout { grid-template-columns: 1fr 1fr; gap: var(--s7); }
+}
+
+/* Membership card */
+.card-wrap { perspective: 900px; max-width: 400px; }
+.membership-card {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1.586 / 1;
+  background: linear-gradient(135deg, #0d0d0d 0%, #1a1a1a 60%, #070707 100%);
+  border: 1px solid rgba(244,241,234,0.12);
+  transform-style: preserve-3d;
+  transition: transform 0.08s ease;
+  overflow: hidden;
+  cursor: default;
+}
+.card-grid-bg {
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(244,241,234,0.02) 39px, rgba(244,241,234,0.02) 40px),
+    repeating-linear-gradient(0deg,  transparent, transparent 39px, rgba(244,241,234,0.02) 39px, rgba(244,241,234,0.02) 40px);
+}
+.card-sheen {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at var(--mx,50%) var(--my,50%), rgba(244,241,234,0.06) 0%, transparent 55%);
+  pointer-events: none;
+}
+.card-divider {
+  position: absolute;
+  left: 0; right: 0;
+  bottom: 34%;
+  height: 1px;
+  background: rgba(244,241,234,0.12);
+}
+.card-inner {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(14px,3.5%,22px) clamp(18px,5%,28px);
+}
+.card-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.card-logo svg { width: 28px; height: auto; fill: var(--bone); opacity: 0.85; }
+.card-tag-text {
+  font-size: 0.5rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(244,241,234,0.25);
+}
+.card-mid { text-align: center; }
+.card-mid-label {
+  display: block;
+  font-size: 0.46rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: rgba(244,241,234,0.25);
+  margin-bottom: 6px;
+}
+.card-number {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(1.8rem, 5vw, 2.4rem);
+  letter-spacing: 0.05em;
+  color: var(--bone);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.card-number sub {
+  font-size: 55%;
+  color: rgba(244,241,234,0.2);
+  vertical-align: baseline;
+}
+.card-bot { display: flex; justify-content: space-between; align-items: flex-end; }
+.card-drop-info {
+  font-size: 0.5rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(244,241,234,0.3);
+  line-height: 1.7;
+}
+.card-date {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  color: var(--bone-60);
+}
+
+/* Kit specs */
+.kit-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s2);
+  margin-top: var(--s5);
+}
+.kit-card {
+  border: 1px solid var(--bone-08);
+  padding: var(--s3);
+}
+.kit-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--bone);
+  margin-bottom: var(--s2);
+}
+.kit-detail {
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(244,241,234,0.32);
+  line-height: 1.9;
+}
+
+/* Route col */
+.route-col { display: flex; flex-direction: column; gap: var(--s4); }
+.section-label {
+  font-size: 0.58rem;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: rgba(244,241,234,0.28);
+}
+#route-svg { width: 100%; }
+#route-svg path {
+  stroke: var(--bone-60);
+  stroke-width: 1.5;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+#route-svg circle { fill: var(--bone); }
+#route-svg text { fill: var(--bone-60); }
+
+.spec-list { border-top: 1px solid var(--bone-08); }
+.spec-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--bone-04);
+}
+.spec-key {
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(244,241,234,0.38);
+}
+.spec-val {
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  color: var(--bone);
+}
+.spec-val.hi { color: var(--bone-90); }
+
+/* ── BAND D-0: 238-DAY CHALLENGE ─────────────────────── */
+.band-challenge {
+  position: relative;
+  background: var(--black);
+  padding: var(--s8) var(--s4);
+  border-top: 1px solid var(--bone-08);
+  overflow: hidden;
+}
+.challenge-kicker {
+  font-size: 0.56rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--bone-35);
+  margin-bottom: var(--s2);
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+.challenge-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(3rem, 10vw, 8rem);
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  color: var(--bone);
+  line-height: 0.9;
+  margin-bottom: var(--s7);
+}
+.challenge-title span {
+  display: block;
+  color: var(--bone-15);
+}
+.challenge-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--s6);
+}
+@media (min-width: 768px) {
+  .challenge-layout { grid-template-columns: 1.4fr 1fr; gap: var(--s7); }
+}
+
+/* Progress bar */
+.progress-section { display: flex; flex-direction: column; gap: var(--s4); }
+.progress-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.progress-label-left {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--bone-35);
+  font-weight: 600;
+}
+.progress-label-right {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  color: var(--bone);
+}
+.progress-track {
+  width: 100%;
+  height: 2px;
+  background: var(--bone-08);
+  position: relative;
+}
+.progress-fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  background: var(--bone);
+  transition: width 1.2s var(--ease-out);
+}
+.progress-thumb {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px; height: 6px;
+  background: var(--bone);
+  border-radius: 50%;
+}
+
+/* Day tiles */
+.day-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(28px, 1fr));
+  gap: 3px;
+  margin-top: var(--s3);
+}
+.day-tile {
+  aspect-ratio: 1;
+  background: var(--bone-04);
+  border: 1px solid var(--bone-08);
+  position: relative;
+  transition: background 0.2s ease;
+}
+.day-tile.done {
+  background: var(--bone-15);
+  border-color: var(--bone-35);
+}
+.day-tile.today {
+  background: var(--bone);
+  border-color: var(--bone);
+}
+.day-tile.done::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--bone-08);
+}
+
+/* Stats row */
+.challenge-stats {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  border-top: 1px solid var(--bone-08);
+  margin-top: var(--s5);
+}
+.ch-stat {
+  padding: var(--s4) 0;
+  border-right: 1px solid var(--bone-08);
+}
+.ch-stat:last-child { border-right: none; }
+.ch-stat-num {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.6rem, 4vw, 2.8rem);
+  letter-spacing: -0.03em;
+  color: var(--bone);
+  line-height: 1;
+  margin-bottom: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.ch-stat-lbl {
+  font-family: var(--font-mono);
+  font-size: 0.52rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--bone-35);
+  font-weight: 600;
+}
+
+/* Pillars list */
+.pillars-section { display: flex; flex-direction: column; gap: var(--s3); }
+.pillars-title {
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--bone-35);
+  font-weight: 600;
+}
+.pillar-row {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s3) 0;
+  border-bottom: 1px solid var(--bone-04);
+}
+.pillar-icon {
+  width: 32px; height: 32px;
+  border: 1px solid var(--bone-08);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.pillar-icon svg { width: 14px; height: 14px; }
+.pillar-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--bone);
+  flex: 1;
+}
+.pillar-freq {
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--bone-35);
+  font-weight: 600;
+}
+
+/* Manifesto strip */
+.challenge-manifesto {
+  margin-top: var(--s7);
+  border-top: 1px solid var(--bone-08);
+  padding-top: var(--s5);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--s3);
+}
+@media (min-width: 768px) {
+  .challenge-manifesto { grid-template-columns: repeat(3,1fr); }
+}
+.manifesto-phrase {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(0.9rem, 1.8vw, 1.2rem);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--bone-35);
+  line-height: 1.4;
+  transition: color 0.2s ease;
+}
+.manifesto-phrase:hover { color: var(--bone); }
+
+/* ── BAND E: TECHNOLOGY ───────────────────────────────── */
+.band-tech {
+  position: relative;
+  background: var(--black);
+  padding: var(--s8) var(--s4);
+  border-top: 1px solid var(--bone-08);
+  overflow: hidden;
+}
+.tech-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: var(--s7);
+  flex-wrap: wrap;
+  gap: var(--s4);
+}
+.tech-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(2.4rem, 7vw, 6rem);
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  color: var(--bone);
+  line-height: 0.9;
+}
+.tech-title span { color: var(--bone-15); }
+.tech-subtitle {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--bone-35);
+  font-weight: 600;
+  max-width: 24ch;
+  line-height: 1.9;
+}
+
+/* Feature cards */
+.tech-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1px;
+  background: var(--bone-08);
+}
+@media (min-width: 768px) {
+  .tech-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (min-width: 1024px) {
+  .tech-grid { grid-template-columns: repeat(5, 1fr); }
+}
+.tech-card {
+  background: var(--black);
+  padding: var(--s5) var(--s4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  transition: background 0.2s ease;
+  cursor: default;
+}
+.tech-card:hover { background: rgba(244,241,234,0.03); }
+.tech-card-num {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.62rem;
+  letter-spacing: 0.2em;
+  color: var(--bone-35);
+}
+.tech-card-icon {
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--bone-08);
+}
+.tech-card-icon svg { width: 18px; height: 18px; stroke: var(--bone-60); fill: none; stroke-width: 1.5; }
+.tech-card-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--bone);
+  line-height: 1.3;
+}
+.tech-card-detail {
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--bone-35);
+  line-height: 1.8;
+  font-family: var(--font-mono);
+  font-weight: 500;
+}
+
+/* Material strip */
+.material-strip {
+  margin-top: var(--s7);
+  border-top: 1px solid var(--bone-08);
+  display: grid;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 480px) {
+  .material-strip { grid-template-columns: repeat(2,1fr); }
+}
+@media (min-width: 768px) {
+  .material-strip { grid-template-columns: repeat(4,1fr); }
+}
+.material-cell {
+  padding: var(--s4) var(--s3) var(--s4) 0;
+  border-bottom: 1px solid var(--bone-04);
+}
+@media (min-width: 768px) {
+  .material-cell {
+    border-bottom: none;
+    border-right: 1px solid var(--bone-08);
+  }
+  .material-cell:last-child { border-right: none; }
+}
+.material-label {
+  font-family: var(--font-mono);
+  font-size: 0.52rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--bone-35);
+  font-weight: 600;
+  margin-bottom: var(--s2);
+  display: block;
+}
+.material-value {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(0.85rem, 1.8vw, 1.1rem);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--bone);
+  line-height: 1.3;
+}
+
+/* ── BAND F: COMMUNITY ────────────────────────────────── */
+.band-community {
+  position: relative;
+  background: var(--black);
+  padding: var(--s8) var(--s4);
+  border-top: 1px solid var(--bone-08);
+  overflow: hidden;
+}
+.community-heading {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(2.8rem, 9vw, 7.5rem);
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+  color: var(--bone);
+  line-height: 0.88;
+  margin-bottom: var(--s7);
+}
+.community-heading em {
+  font-style: normal;
+  color: var(--bone-15);
+}
+.community-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--s4);
+}
+@media (min-width: 640px) {
+  .community-grid { grid-template-columns: repeat(2,1fr); }
+}
+@media (min-width: 1024px) {
+  .community-grid { grid-template-columns: repeat(3,1fr); }
+}
+.community-card {
+  border: 1px solid var(--bone-08);
+  padding: var(--s5) var(--s4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  transition: border-color 0.2s ease;
+}
+.community-card:hover { border-color: var(--bone-35); }
+.comm-card-type {
+  font-family: var(--font-mono);
+  font-size: 0.52rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--bone-35);
+  font-weight: 600;
+}
+.comm-card-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1rem, 2.5vw, 1.5rem);
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: var(--bone);
+  line-height: 1.15;
+}
+.comm-card-body {
+  font-size: 0.72rem;
+  line-height: 1.9;
+  color: var(--bone-35);
+  flex: 1;
+}
+.comm-card-tag {
+  font-family: var(--font-mono);
+  font-size: 0.52rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(244,241,234,0.18);
+  font-weight: 600;
+  border-top: 1px solid var(--bone-04);
+  padding-top: var(--s3);
+  margin-top: auto;
+}
+
+/* Quote / ticker strip */
+.ticker-strip {
+  margin: var(--s7) 0 0;
+  border-top: 1px solid var(--bone-08);
+  border-bottom: 1px solid var(--bone-08);
+  padding: var(--s4) 0;
+  overflow: hidden;
+}
+.ticker-inner {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: scroll-left 36s linear infinite;
+}
+.ticker-phrase {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(1.2rem, 3vw, 2rem);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--bone-15);
+  padding: 0 var(--s6);
+}
+.ticker-dot {
+  font-size: clamp(1.2rem, 3vw, 2rem);
+  color: var(--bone-08);
+  align-self: center;
+}
+
+/* ── BAND G: WAITLIST ─────────────────────────────────── */
+.band-waitlist {
+  position: relative;
+  background: var(--black);
+  padding: var(--s8) var(--s4);
+  border-top: 1px solid var(--bone-08);
+}
+.waitlist-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--bone-35);
+  font-weight: 600;
+  margin-bottom: var(--s3);
+}
+.waitlist-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(2.8rem, 9vw, 7rem);
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+  color: var(--bone);
+  line-height: 0.88;
+  margin-bottom: var(--s6);
+}
+.waitlist-title em {
+  font-style: normal;
+  display: block;
+  color: var(--bone-15);
+}
+.waitlist-body {
+  font-size: 0.75rem;
+  line-height: 1.9;
+  color: var(--bone-35);
+  max-width: 40ch;
+  margin-bottom: var(--s6);
+}
+
+/* Waitlist form */
+.waitlist-form-wrap {
+  max-width: 540px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  margin-bottom: var(--s6);
+}
+.waitlist-form {
+  display: flex;
+}
+.waitlist-input {
+  flex: 1;
+  background: transparent;
+  border: 1px solid rgba(244,241,234,0.15);
+  border-right: none;
+  color: var(--bone);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 14px var(--s3);
+  outline: none;
+  min-height: 52px;
+  transition: border-color 0.2s ease;
+  font-weight: 500;
+}
+.waitlist-input::placeholder { color: rgba(244,241,234,0.18); }
+.waitlist-input:focus { border-color: var(--bone-60); }
+.waitlist-btn {
+  background: var(--bone);
+  color: var(--black);
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 14px var(--s5);
+  cursor: pointer;
+  min-height: 52px;
+  transition: background 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+.waitlist-btn:hover {
+  background: transparent;
+  color: var(--bone);
+  border: 1px solid var(--bone-35);
+  border-left: none;
+}
+.waitlist-btn:active { transform: scale(0.97); }
+.waitlist-fine {
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(244,241,234,0.18);
+  font-weight: 500;
+}
+
+/* Benefits */
+.waitlist-benefits {
+  display: grid;
+  grid-template-columns: 1fr;
+  border-top: 1px solid var(--bone-08);
+  margin-top: var(--s5);
+}
+@media (min-width: 640px) {
+  .waitlist-benefits { grid-template-columns: repeat(3,1fr); }
+}
+.benefit-item {
+  padding: var(--s4) 0;
+  border-bottom: 1px solid var(--bone-04);
+  display: flex;
+  gap: var(--s3);
+  align-items: flex-start;
+}
+@media (min-width: 640px) {
+  .benefit-item {
+    border-bottom: none;
+    border-right: 1px solid var(--bone-08);
+    padding-right: var(--s4);
+  }
+  .benefit-item:last-child { border-right: none; }
+}
+.benefit-num {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: -0.02em;
+  color: var(--bone-35);
+  line-height: 1;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+.benefit-text {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--bone-60);
+  line-height: 1.8;
+  font-weight: 600;
+}
+
+/* ── BAND D: ACCESS ───────────────────────────────────── */
+.band-access {
+  background: var(--black);
+  padding: var(--s8) var(--s4) var(--s6);
+  border-top: 1px solid var(--bone-08);
+}
+.access-heading {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(3rem, 11vw, 9rem);
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+  color: var(--bone);
+  line-height: 0.88;
+  margin-bottom: var(--s7);
+}
+.access-heading em {
+  display: block;
+  color: var(--bone-15);
+  font-style: normal;
+}
+.access-form {
+  display: flex;
+  max-width: 540px;
+  margin-bottom: var(--s2);
+}
+.access-input {
+  flex: 1;
+  background: transparent;
+  border: 1px solid rgba(244,241,234,0.15);
+  border-right: none;
+  color: var(--bone);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 14px var(--s3);
+  outline: none;
+  min-height: 48px;
+  transition: border-color 0.2s ease;
+}
+.access-input::placeholder { color: rgba(244,241,234,0.15); }
+.access-input:focus { border-color: var(--bone-35); }
+.access-btn {
+  background: var(--bone);
+  color: var(--black);
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 14px var(--s4);
+  cursor: pointer;
+  min-height: 48px;
+  transition: background 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+.access-btn:hover { background: transparent; color: var(--bone); border: 1px solid var(--bone-35); border-left: none; }
+.access-note {
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(244,241,234,0.2);
+}
+
+/* Big countdown */
+.big-countdown { margin: var(--s8) 0; }
+.big-cd-label {
+  font-size: 0.58rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(244,241,234,0.25);
+  margin-bottom: var(--s3);
+}
+.big-cd-row {
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  max-width: 760px;
+  border-top: 1px solid var(--bone-08);
+}
+.big-cd-cell {
+  padding: var(--s4) var(--s3) var(--s4) 0;
+  border-right: 1px solid var(--bone-08);
+}
+.big-cd-cell:last-child { border-right: none; }
+.big-cd-num {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(2.4rem, 7vw, 5.5rem);
+  letter-spacing: -0.04em;
+  color: var(--bone);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+.big-cd-unit {
+  display: block;
+  font-size: 0.5rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(244,241,234,0.25);
+  margin-top: 6px;
+}
+
+/* Footer trilogy */
+.footer-trilogy {
+  border-top: 1px solid var(--bone-08);
+  padding-top: var(--s5);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--s3);
+}
+@media (min-width: 768px) {
+  .footer-trilogy { grid-template-columns: repeat(3,1fr); }
+}
+.trilogy-line {
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(244,241,234,0.25);
+  line-height: 1.7;
+}
+.trilogy-line::before {
+  content: '—';
+  color: var(--bone-60);
+  margin-right: 0.55em;
+}
+
+.footer-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  margin-top: var(--s4);
+  padding-top: var(--s4);
+  border-top: 1px solid rgba(244,241,234,0.04);
+}
+.footer-mark {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(244,241,234,0.15);
+}
+.footer-legal {
+  font-size: 0.56rem;
+  letter-spacing: 0.1em;
+  color: rgba(244,241,234,0.12);
+}
+
+/* ── KEYFRAMES ────────────────────────────────────────── */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  25%     { transform: translateX(-7px); }
+  75%     { transform: translateX(7px); }
+}
+@keyframes scroll-left {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* ── UTILITY ──────────────────────────────────────────── */
+.sr-only {
+  position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
+}
+</style>
 </head>
 <body>
 
-  <div id="cursor-dot"></div>
-  <div id="cursor-ring"></div>
+<!-- ══════════════════════════════════ GATE ══════════════ -->
+<section id="gate" role="main" aria-label="Acceso KEEP DROP 001">
 
-  <!-- LOCK SCREEN -->
-  <div id="lock">
-    <canvas id="lock-canvas"></canvas>
+  <div class="gate-symbol" aria-hidden="true">
+    <svg viewBox="0 0 290 390" xmlns="http://www.w3.org/2000/svg" fill="#F4F1EA">
+      <path d="M280,0 L0,130 L0,185 L245,130 Z M280,390 L0,260 L0,205 L245,260 Z"/>
+    </svg>
+  </div>
 
-    <div id="lock-ui">
-      <div id="lock-icon"></div>
-      <div id="lock-wordmark">KEEP</div>
-      <div id="lock-form">
-        <div id="lock-label">// ACCESS REQUIRED</div>
-        <input id="lock-input" type="password" autocomplete="off" spellcheck="false" autofocus>
-        <div id="lock-error">ACCESS DENIED</div>
+  <div class="gate-copy">
+    <h1 class="gate-headline">
+      El acceso<br>no se <em>compra</em>,<br>se obtiene.
+    </h1>
+    <form class="gate-form" id="gate-form" novalidate>
+      <label for="gate-inp" class="sr-only">Código de acceso</label>
+      <input id="gate-inp" class="gate-input" type="text"
+        placeholder="código de acceso"
+        autocomplete="off" spellcheck="false" maxlength="10"
+        aria-describedby="gate-err">
+      <button type="submit" class="gate-btn" aria-label="Entrar">→ entrar</button>
+    </form>
+    <p class="gate-error" id="gate-err" role="alert" aria-live="polite"></p>
+  </div>
+
+  <footer class="gate-footer" aria-label="Cuenta regresiva">
+    <span class="gate-drop-label">DROP 001 · Maratón Puebla · 4 nov 2026</span>
+    <div class="gate-countdown" aria-live="off">
+      <span class="n" id="gd">---</span>D &nbsp;
+      <span class="n" id="gh">--</span>H &nbsp;
+      <span class="n" id="gm">--</span>M &nbsp;
+      <span class="n" id="gs">--</span>S
+    </div>
+  </footer>
+
+</section>
+
+<!-- ════════════════════════════════ HOME ═══════════════ -->
+<main id="home" aria-label="KEEP DROP 001">
+
+  <!-- BANDA A: HERO -->
+  <section class="band-hero" aria-label="Hero">
+
+    <!-- Full-bleed canvas runner -->
+    <canvas id="runner-canvas" aria-hidden="true"></canvas>
+
+    <!-- Topographic lines -->
+    <svg id="topo-svg" viewBox="0 0 1440 400" preserveAspectRatio="xMidYMax slice"
+      aria-hidden="true"></svg>
+
+    <!-- Top nav -->
+    <nav class="hud-nav" aria-label="Navegación principal">
+      <span class="nav-brand">KEEP</span>
+      <ul class="nav-links" role="list">
+        <li><a href="#">Movement</a></li>
+        <li><a href="#">Lab</a></li>
+        <li><a href="#">Access</a></li>
+        <li><a href="#">Journal</a></li>
+      </ul>
+      <div class="nav-right">
+        <span class="nav-sign">Sign in</span>
+        <div class="nav-dot" aria-hidden="true"></div>
+      </div>
+    </nav>
+
+    <!-- Coordinates HUD top-left (below nav) -->
+    <div class="hud-tl" aria-hidden="true">
+      <!-- spacer for nav height -->
+      <div style="height:52px"></div>
+      <p class="hud-coord">
+        <span class="hud-coord-line">19.0414° N</span>
+        <span class="hud-coord-line">98.2063° W</span>
+        <span class="hud-coord-line" style="margin-top:4px;color:rgba(244,241,234,0.2)">PUEBLA, MX</span>
+      </p>
+    </div>
+
+    <!-- Data panel HUD top-right -->
+    <div class="hud-tr" aria-label="Datos de actividad">
+      <div class="hud-panel">
+        <span class="hud-panel-label">Actividad actual</span>
+        <span class="hud-panel-title">Entrenamiento</span>
+        <span class="hud-panel-sub">Puebla, México</span>
+        <div class="hud-stat-row">
+          <span class="hud-stat-key">Distancia</span>
+          <span class="hud-stat-val">42.195 km</span>
+        </div>
+        <div class="hud-stat-row">
+          <span class="hud-stat-key">Ritmo</span>
+          <span class="hud-stat-val">4:28 /km</span>
+        </div>
+        <div class="hud-stat-row">
+          <span class="hud-stat-key">Elevación</span>
+          <span class="hud-stat-val">2,135 m</span>
+        </div>
+        <div class="hud-stat-row">
+          <span class="hud-stat-key">Tiempo</span>
+          <span class="hud-stat-val">3:08:44</span>
+        </div>
+        <svg class="hud-waveform" viewBox="0 0 220 28" aria-hidden="true">
+          <polyline
+            points="0,14 8,10 14,18 20,8 26,16 32,6 38,20 44,12 50,16 56,4 62,22 68,10 74,14 80,18 86,8 92,20 98,12 104,16 110,6 116,22 122,10 128,14 134,18 140,8 146,20 152,12 158,16 164,4 170,22 176,10 182,14 188,18 194,8 200,16 206,10 212,14 220,14"
+            stroke="rgba(244,241,234,0.4)" stroke-width="1" fill="none"/>
+        </svg>
       </div>
     </div>
 
-    <div id="lock-ver">KEEP SYS v0.1 &nbsp;—&nbsp; LOCKED</div>
+    <!-- KEEP wordmark -->
+    <div class="hero-wordmark" aria-label="KEEP">
+      <span>K</span><span>E</span><span>E</span><span>P</span>
+    </div>
+
+    <!-- Tagline -->
+    <p class="hero-tagline">Primero lo vivo,<br>luego lo vendo.</p>
+
+    <!-- Drop tag -->
+    <span class="hero-drop-tag" aria-hidden="true">DROP 001</span>
+
+    <!-- Crosshairs decoration -->
+    <span class="hud-cross" style="top:22%;left:22%" aria-hidden="true">+</span>
+    <span class="hud-cross" style="top:55%;right:28%" aria-hidden="true">+</span>
+    <span class="hud-cross" style="bottom:28%;left:45%" aria-hidden="true">+</span>
+
+    <!-- Scroll hint -->
+    <div class="hero-scroll-hint" aria-hidden="true">
+      <span class="hero-scroll-label">Scroll to explore</span>
+      <span class="hero-scroll-line"></span>
+    </div>
+
+  </section>
+
+  <!-- MARQUEE -->
+  <div class="marquee-wrap" aria-hidden="true">
+    <div class="marquee-track">
+      <span class="marquee-item">KEEP</span><span class="marquee-sep">·</span>
+      <span class="marquee-item">DROP 001</span><span class="marquee-sep">·</span>
+      <span class="marquee-item">KEEP RUNNING</span><span class="marquee-sep">·</span>
+      <span class="marquee-item">50 SETS</span><span class="marquee-sep">·</span>
+      <span class="marquee-item">4·NOV·2026</span><span class="marquee-sep">·</span>
+      <span class="marquee-item">MARATÓN PUEBLA</span><span class="marquee-sep">·</span>
+      <span class="marquee-item">EDICIÓN LIMITADA</span><span class="marquee-sep">·</span>
+      <span class="marquee-item">KEEP</span><span class="marquee-sep">·</span>
+      <span class="marquee-item">DROP 001</span><span class="marquee-sep">·</span>
+      <span class="marquee-item">KEEP RUNNING</span><span class="marquee-sep">·</span>
+      <span class="marquee-item">50 SETS</span><span class="marquee-sep">·</span>
+      <span class="marquee-item">4·NOV·2026</span><span class="marquee-sep">·</span>
+      <span class="marquee-item">MARATÓN PUEBLA</span><span class="marquee-sep">·</span>
+      <span class="marquee-item">EDICIÓN LIMITADA</span><span class="marquee-sep">·</span>
+    </div>
   </div>
 
-  <!-- MAIN SITE -->
-  <div id="main" hidden>
+  <!-- BANDA B: DATA / MANIFESTO -->
+  <section class="band-data" aria-label="Manifiesto">
 
-    <nav id="nav">
-      <span class="nav-logo">KEEP</span>
-      <div class="nav-status">
-        <span class="nav-dot"></span>
-        <span>SISTEMA ACTIVO</span>
+    <svg class="wave-bg" id="wave-svg" viewBox="0 0 1440 600"
+      preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
+
+    <canvas class="point-cloud-canvas" id="cloud-canvas"
+      width="380" height="500" aria-hidden="true"></canvas>
+
+    <div class="data-grid">
+      <div class="data-col">
+        <span class="col-label">Filosofía</span>
+        <h2 class="col-manifesto">Construido<br>en datos.<br>Impulsado<br>por propósito.</h2>
+        <p class="col-body">
+          KEEP es la intersección<br>
+          entre rendimiento,<br>
+          diseño y disciplina.<br><br>
+          No vendemos ropa.<br>
+          Vendemos el kilómetro<br>
+          antes de romper.<br><br>
+          La disciplina no es lineal.
+        </p>
       </div>
-      <span class="nav-time" id="nav-time">00:00:00 UTC</span>
-    </nav>
 
-    <aside id="sidebar-left">
-      <span class="sidebar-label">DROP 001</span>
-    </aside>
-    <aside id="sidebar-right">
-      <span class="sidebar-label" id="sidebar-sec">01</span>
-    </aside>
+      <div class="data-col">
+        <span class="col-label">Números</span>
+        <span class="stat-num">050</span>
+        <span class="stat-label">Sets numerados · Edición única</span>
+        <span class="stat-num">14–21</span>
+        <span class="stat-label">Días de entrega post-maratón</span>
+        <span class="stat-num">2</span>
+        <span class="stat-label">Piezas por set</span>
+        <span class="stat-num accent">001</span>
+        <span class="stat-label">Drop número</span>
+      </div>
 
-    <main>
+      <div class="data-col">
+        <span class="col-label">Territorio</span>
+        <div class="location-name">
+          Madrid
+          <span class="location-sep"></span>
+          CDMX
+          <span class="location-sep"></span>
+          Puebla
+        </div>
+        <p class="col-body" style="margin-top:var(--s5)">
+          Maratón Puebla<br>
+          4 · Nov · 2026<br><br>
+          El drop no sale<br>
+          hasta que el corredor<br>
+          cruza la meta.
+        </p>
+      </div>
+    </div>
 
-      <!-- 01 HERO -->
-      <section id="hero" data-sec="01">
-        <canvas id="hero-canvas"></canvas>
-        <div class="hero-inner">
-          <div class="hero-tag">// 01 — KEEP MOVING</div>
-          <div class="hero-title-wrap">
-            <span class="hero-ghost" aria-hidden="true">KEEP</span>
-            <h1 class="hero-title">KEEP</h1>
-          </div>
-          <div class="hero-sub">LA DISCIPLINA NO ES LINEAL</div>
-          <p class="hero-body">No siempre irá como esperas. El punto es mantener.</p>
-        </div>
-        <div class="hero-scroll">
-          <span class="hero-scroll-label">SCROLL</span>
-          <div class="hero-scroll-line"></div>
-        </div>
-      </section>
+  </section>
 
-      <!-- 02 PILLARS -->
-      <section id="pillars" data-sec="02">
-        <div class="pillar">
-          <div class="pillar-num">01</div>
-          <div class="pillar-name">MOVING</div>
-          <div class="pillar-bar"><div class="pillar-fill" style="width:78%"></div></div>
-        </div>
-        <div class="pillar">
-          <div class="pillar-num">02</div>
-          <div class="pillar-name">BUILDING</div>
-          <div class="pillar-bar"><div class="pillar-fill" style="width:65%"></div></div>
-        </div>
-        <div class="pillar">
-          <div class="pillar-num">03</div>
-          <div class="pillar-name">EXPLORING</div>
-          <div class="pillar-bar"><div class="pillar-fill" style="width:82%"></div></div>
-        </div>
-        <div class="pillar">
-          <div class="pillar-num">04</div>
-          <div class="pillar-name">PUSHING</div>
-          <div class="pillar-bar"><div class="pillar-fill" style="width:71%"></div></div>
-        </div>
-        <div class="pillar">
-          <div class="pillar-num">05</div>
-          <div class="pillar-name">CLIMBING</div>
-          <div class="pillar-bar"><div class="pillar-fill" style="width:59%"></div></div>
-        </div>
-        <div class="pillar">
-          <div class="pillar-num">06</div>
-          <div class="pillar-name">RUNNING</div>
-          <div class="pillar-bar"><div class="pillar-fill" style="width:88%"></div></div>
-        </div>
-      </section>
+  <!-- BANDA C: DROP 001 -->
+  <section class="band-drop" aria-label="DROP 001 — Especificaciones">
 
-      <!-- 03 MANIFESTO -->
-      <section id="manifesto" data-sec="03">
-        <div class="mnf-lines">
-          <span class="mnf-line off-1">NO TODO IRARÁ BIEN.</span>
-          <span class="mnf-line off-2">MANTÉN.</span>
-          <span class="mnf-line off-3">NO SIEMPRE SERÁ FÁCIL.</span>
-          <span class="mnf-line off-4">MANTÉN.</span>
-          <span class="mnf-line off-5">HABRÁ DÍAS QUE FALLES.</span>
-          <span class="mnf-line off-6">MANTÉN.</span>
-          <span class="mnf-line off-7">ESO ES KEEP.</span>
-        </div>
-      </section>
+    <p class="drop-kicker">DROP 001 — Edición limitada · 50 sets</p>
+    <h2 class="drop-title">Keep<br>Running</h2>
 
-      <!-- 04 DROP -->
-      <section id="drop" data-sec="04">
-        <div class="drop-canvas-col">
-          <canvas id="drop-canvas"></canvas>
-        </div>
-        <div class="drop-content">
-          <div class="drop-tag">// DROP 001 — RETO ACTIVO</div>
-          <h2 class="drop-title">KEEP RUNNING</h2>
-          <p class="drop-body">Corre 5km todos los días durante 28 días.<br>Sin excepciones. Sin modificaciones.</p>
-          <div class="drop-rule"></div>
-          <div class="lb-head">
-            <span>RNK</span><span>HANDLE</span><span>DÍAS</span><span>PTS</span>
-          </div>
-          <div class="lb-row">
-            <span class="lb-rank top">01</span>
-            <span>@mantiene_todo</span><span>28</span><span>2,840</span>
-          </div>
-          <div class="lb-row">
-            <span class="lb-rank">02</span>
-            <span>@push_28dias</span><span>26</span><span>2,610</span>
-          </div>
-          <div class="lb-row">
-            <span class="lb-rank">03</span>
-            <span>@keep_climbing</span><span>24</span><span>2,400</span>
-          </div>
-          <div class="lb-row">
-            <span class="lb-rank">04</span>
-            <span>@no_excusas</span><span>22</span><span>2,180</span>
-          </div>
-          <div class="lb-row">
-            <span class="lb-rank">05</span>
-            <span>@la_constancia</span><span>21</span><span>2,050</span>
-          </div>
-          <div class="drop-rule" style="margin-bottom:0"></div>
-          <div class="drop-prize">PREMIO — 1 PIEZA DROP 001 &nbsp;/&nbsp; NÚMERO DE SERIE GRABADO</div>
-        </div>
-      </section>
+    <div class="drop-layout">
 
-      <!-- 05 ACCESS -->
-      <section id="access" data-sec="05">
-        <div class="access-left">
-          <div class="key-card">
-            <span class="kc-corner tl"></span>
-            <span class="kc-corner tr"></span>
-            <span class="kc-corner bl"></span>
-            <span class="kc-corner br"></span>
-            <div class="kc-label">ACCESS CREDENTIAL</div>
-            <div class="kc-code">KP-001-██████-ALPHA</div>
-            <div class="kc-tiers">
-              <div class="kc-tier active">
-                <span class="kc-tier-name">ALPHA — FOUNDING</span>
-                <span class="kc-status on">ACTIVO</span>
+      <div>
+        <p class="section-label" style="margin-bottom:var(--s3)">Membership Card</p>
+        <div class="card-wrap" id="card-wrap">
+          <div class="membership-card" id="m-card">
+            <div class="card-grid-bg"></div>
+            <div class="card-sheen" id="c-sheen"></div>
+            <div class="card-divider"></div>
+            <div class="card-inner">
+              <div class="card-top">
+                <div class="card-logo" aria-label="KEEP">
+                  <svg viewBox="0 0 290 390" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M280,0 L0,130 L0,185 L245,130 Z M280,390 L0,260 L0,205 L245,260 Z"/>
+                  </svg>
+                </div>
+                <span class="card-tag-text">KEEP Running</span>
               </div>
-              <div class="kc-tier">
-                <span class="kc-tier-name">BETA — EXTENDED</span>
-                <span class="kc-status off">PENDIENTE</span>
+              <div class="card-mid">
+                <span class="card-mid-label">Membership N°</span>
+                <div class="card-number">001<sub> / 050</sub></div>
               </div>
-              <div class="kc-tier">
-                <span class="kc-tier-name">FIELD — OPERATIONAL</span>
-                <span class="kc-status off">PENDIENTE</span>
-              </div>
-              <div class="kc-tier">
-                <span class="kc-tier-name">OPEN — STANDARD</span>
-                <span class="kc-status off">PENDIENTE</span>
+              <div class="card-bot">
+                <div class="card-drop-info">DROP 001<br>KEEP Running</div>
+                <div class="card-date">4·NOV·2026</div>
               </div>
             </div>
           </div>
         </div>
-        <div class="access-right">
-          <div class="access-tag">// 05 — ACCESO</div>
-          <h2 class="access-title">CADA PRENDA<br>ES UNA LLAVE.</h2>
-          <p class="access-body">El acceso a KEEP no se compra por separado. Viene con la prenda. Cada pieza de cada drop incluye su clave única — física, grabada, irrepetible. Cuando termina el drop, la clave se cierra para siempre.</p>
-        </div>
-      </section>
 
-      <!-- 06 CTA -->
-      <section id="cta" data-sec="06">
-        <div class="cta-inner">
-          <div class="cta-tag">// 06 — ÚNETE</div>
-          <h2 class="cta-title">LISTA DE<br>ESPERA</h2>
-          <p class="cta-body">DROP 002 en preparación. Sé el primero en recibir acceso cuando abra la siguiente llave.</p>
-          <form class="cta-form" onsubmit="return false">
-            <input class="cta-input" type="email" placeholder="tu@email.com" autocomplete="off">
-            <button class="cta-btn" type="submit">ACCESO</button>
-          </form>
-        </div>
-      </section>
-
-      <!-- 07 TICKER -->
-      <section id="ticker" data-sec="07">
-        <div class="ticker-row">
-          <div class="ticker-track">
-            <div class="ticker-content">KEEP MOVING<span class="tsep">—</span>KEEP BUILDING<span class="tsep">—</span>KEEP EXPLORING<span class="tsep">—</span>KEEP PUSHING<span class="tsep">—</span>KEEP CLIMBING<span class="tsep">—</span>KEEP RUNNING<span class="tsep">—</span></div>
-            <div class="ticker-content" aria-hidden="true">KEEP MOVING<span class="tsep">—</span>KEEP BUILDING<span class="tsep">—</span>KEEP EXPLORING<span class="tsep">—</span>KEEP PUSHING<span class="tsep">—</span>KEEP CLIMBING<span class="tsep">—</span>KEEP RUNNING<span class="tsep">—</span></div>
+        <div class="kit-grid">
+          <div class="kit-card">
+            <p class="kit-name">Kit Negro</p>
+            <p class="kit-detail">Longsleeve<br>Shorts<br>Vinil reflectivo<br>Numerado</p>
+          </div>
+          <div class="kit-card">
+            <p class="kit-name">Kit Blanco</p>
+            <p class="kit-detail">Longsleeve<br>Shorts<br>Vinil negro mate<br>Numerado</p>
           </div>
         </div>
-        <div class="ticker-row">
-          <div class="ticker-track rev">
-            <div class="ticker-content">DROP 001<span class="tsep">—</span>KEEP SYSTEM v0.1<span class="tsep">—</span>ACCESO VÍA LLAVE FÍSICA<span class="tsep">—</span>LA DISCIPLINA NO ES LINEAL<span class="tsep">—</span></div>
-            <div class="ticker-content" aria-hidden="true">DROP 001<span class="tsep">—</span>KEEP SYSTEM v0.1<span class="tsep">—</span>ACCESO VÍA LLAVE FÍSICA<span class="tsep">—</span>LA DISCIPLINA NO ES LINEAL<span class="tsep">—</span></div>
+      </div>
+
+      <div class="route-col">
+        <p class="section-label">Ruta · Maratón Puebla 2026</p>
+
+        <svg id="route-svg" viewBox="0 0 400 260"
+          xmlns="http://www.w3.org/2000/svg" aria-label="Ruta del Maratón Puebla">
+          <path id="route-path"
+            d="M30,130
+               C55,118 80,100 105,92
+               C130,84 145,90 162,100
+               C179,110 185,125 202,128
+               C219,131 235,118 252,108
+               C269,98 282,88 300,86
+               C318,84 330,96 342,110
+               C354,124 358,140 368,148
+               C375,154 380,158 378,165
+               C374,174 362,178 348,176
+               C330,173 318,162 302,156
+               C286,150 270,152 254,158
+               C238,164 224,174 208,178
+               C192,182 176,176 160,170
+               C144,164 128,156 112,152
+               C96,148 80,154 64,160
+               C48,166 36,168 28,162
+               C22,157 24,144 30,130 Z"
+          />
+          <circle cx="30" cy="130" r="5" opacity="0.9"/>
+          <circle cx="28" cy="162" r="5" opacity="0.4"/>
+          <text x="42" y="126"
+            font-family="'Space Mono',monospace" font-size="9" letter-spacing="1.5">INICIO</text>
+          <text x="42" y="174" opacity="0.4"
+            font-family="'Space Mono',monospace" font-size="9" letter-spacing="1.5">META</text>
+        </svg>
+
+        <div>
+          <p class="section-label" style="margin-bottom:var(--s3)">Contenido del set</p>
+          <div class="spec-list">
+            <div class="spec-row">
+              <span class="spec-key">Longsleeve</span>
+              <span class="spec-val">×1</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Shorts</span>
+              <span class="spec-val">×1</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Número de edición</span>
+              <span class="spec-val hi">001–050</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Entrega estimada</span>
+              <span class="spec-val">14–21 días post 4·nov</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-key">Territorio</span>
+              <span class="spec-val">Madrid · CDMX · Puebla</span>
+            </div>
           </div>
         </div>
-      </section>
+      </div>
 
-    </main>
+    </div>
+  </section>
 
-    <footer id="footer">
-      <span>KEEP v0.1.0</span>
-      <span class="footer-center">ACCESO VÍA LLAVE FÍSICA</span>
-      <span class="footer-right" id="footer-time">00:00:00 UTC</span>
+  <!-- BANDA D-0: 238-DAY CHALLENGE -->
+  <section class="band-challenge" aria-label="Reto 238 días">
+
+    <p class="challenge-kicker">001 / RUN · Desafío activo</p>
+    <h2 class="challenge-title">
+      238<span>Días.</span>
+    </h2>
+
+    <div class="challenge-layout">
+
+      <div class="progress-section">
+        <div class="progress-label-row">
+          <span class="progress-label-left">Progreso general</span>
+          <span class="progress-label-right" id="ch-progress-pct">—%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="ch-progress-fill" style="width:0%">
+            <div class="progress-thumb" id="ch-progress-thumb" style="left:100%"></div>
+          </div>
+        </div>
+        <div class="progress-label-row">
+          <span class="progress-label-left">DIA <span id="ch-day-current">0</span>/238</span>
+          <span class="progress-label-left"><span id="ch-days-left">238</span> días restantes</span>
+        </div>
+
+        <div class="day-grid" id="day-grid" aria-label="Días completados" style="margin-top:var(--s4)"></div>
+
+        <div class="challenge-stats">
+          <div class="ch-stat">
+            <span class="ch-stat-num" id="ch-km">0</span>
+            <span class="ch-stat-lbl">Kilómetros<br>acumulados</span>
+          </div>
+          <div class="ch-stat" style="padding-left:var(--s3)">
+            <span class="ch-stat-num" id="ch-pace">—</span>
+            <span class="ch-stat-lbl">Ritmo medio<br>min/km</span>
+          </div>
+          <div class="ch-stat" style="padding-left:var(--s3)">
+            <span class="ch-stat-num">50</span>
+            <span class="ch-stat-lbl">Objetivo<br>kilómetros finales</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="pillars-section">
+        <p class="pillars-title">Pilares del reto</p>
+        <div class="pillar-row">
+          <div class="pillar-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M13 4v8l4 4M5 12l4-4 4 2 3-3"/>
+            </svg>
+          </div>
+          <span class="pillar-name">Running</span>
+          <span class="pillar-freq">Diario</span>
+        </div>
+        <div class="pillar-row">
+          <div class="pillar-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="5" r="2"/><path d="M10 9H8l-2 6h12l-2-6h-2M12 7v5"/>
+            </svg>
+          </div>
+          <span class="pillar-name">Calistenia</span>
+          <span class="pillar-freq">3×/sem</span>
+        </div>
+        <div class="pillar-row">
+          <div class="pillar-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3L5 9v12h4v-6h6v6h4V9z"/>
+            </svg>
+          </div>
+          <span class="pillar-name">Escalada</span>
+          <span class="pillar-freq">2×/sem</span>
+        </div>
+        <div class="pillar-row">
+          <div class="pillar-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM12 6v6l4 2"/>
+            </svg>
+          </div>
+          <span class="pillar-name">Recuperación</span>
+          <span class="pillar-freq">Diario</span>
+        </div>
+        <div class="pillar-row">
+          <div class="pillar-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="14" rx="1"/><path d="M8 21h8M12 17v4"/>
+            </svg>
+          </div>
+          <span class="pillar-name">Documentación</span>
+          <span class="pillar-freq">Diario</span>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="challenge-manifesto">
+      <p class="manifesto-phrase">No hay motivación.<br>Solo movimiento.</p>
+      <p class="manifesto-phrase">La marca<br>es la prueba.</p>
+      <p class="manifesto-phrase">Construido<br>a través de la repetición.</p>
+    </div>
+
+  </section>
+
+  <!-- BANDA E: TECHNOLOGY & MATERIALS -->
+  <section class="band-tech" aria-label="Tecnología y materiales">
+
+    <div class="tech-header">
+      <h2 class="tech-title">Sistema<br><span>Técnico.</span></h2>
+      <p class="tech-subtitle">
+        Cada decisión de material<br>
+        está validada en kilómetros reales.<br>
+        Ningún detalle es decorativo.
+      </p>
+    </div>
+
+    <div class="tech-grid" role="list">
+      <div class="tech-card" role="listitem">
+        <span class="tech-card-num">01</span>
+        <div class="tech-card-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+          </svg>
+        </div>
+        <p class="tech-card-name">4-Way Stretch</p>
+        <p class="tech-card-detail">Tejido elástico<br>en 4 direcciones<br>Sin restricción</p>
+      </div>
+      <div class="tech-card" role="listitem">
+        <span class="tech-card-num">02</span>
+        <div class="tech-card-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+          </svg>
+        </div>
+        <p class="tech-card-name">Moisture Wick</p>
+        <p class="tech-card-detail">Evaporación<br>activa de sudor<br>Secado rápido</p>
+      </div>
+      <div class="tech-card" role="listitem">
+        <span class="tech-card-num">03</span>
+        <div class="tech-card-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+        </div>
+        <p class="tech-card-name">Vinil Reflectivo</p>
+        <p class="tech-card-detail">Visibilidad nocturna<br>360° grados<br>Acabado mate</p>
+      </div>
+      <div class="tech-card" role="listitem">
+        <span class="tech-card-num">04</span>
+        <div class="tech-card-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+        <p class="tech-card-name">Numeración</p>
+        <p class="tech-card-detail">001–050<br>Certificado<br>Irrepetible</p>
+      </div>
+      <div class="tech-card" role="listitem">
+        <span class="tech-card-num">05</span>
+        <div class="tech-card-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+        </div>
+        <p class="tech-card-name">Fit Técnico</p>
+        <p class="tech-card-detail">Corte running<br>Paneles ergonómicos<br>Zona de ventilación</p>
+      </div>
+    </div>
+
+    <div class="material-strip" role="list">
+      <div class="material-cell" role="listitem">
+        <span class="material-label">Composición</span>
+        <span class="material-value">88% Polyester<br>12% Elastano</span>
+      </div>
+      <div class="material-cell" role="listitem">
+        <span class="material-label">Acabado</span>
+        <span class="material-value">DWR Treatment<br>Anti-pilling</span>
+      </div>
+      <div class="material-cell" role="listitem">
+        <span class="material-label">Certificación</span>
+        <span class="material-value">OEKO-TEX®<br>Standard 100</span>
+      </div>
+      <div class="material-cell" role="listitem">
+        <span class="material-label">Color system</span>
+        <span class="material-value">Kit Negro<br>Kit Blanco</span>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- BANDA F: COMMUNITY -->
+  <section class="band-community" aria-label="Comunidad KEEP">
+
+    <h2 class="community-heading">
+      No corres<br>
+      <em>solo.</em>
+    </h2>
+
+    <div class="community-grid" role="list">
+      <div class="community-card" role="listitem">
+        <span class="comm-card-type">Acceso</span>
+        <h3 class="comm-card-title">Miembros<br>DROP 001</h3>
+        <p class="comm-card-body">
+          Los 50 sets numerados no son ropa.<br>
+          Son credenciales de acceso<br>
+          a una comunidad que prueba<br>
+          antes de hablar.
+        </p>
+        <span class="comm-card-tag">50 plazas · Edición única</span>
+      </div>
+      <div class="community-card" role="listitem">
+        <span class="comm-card-type">Contenido</span>
+        <h3 class="comm-card-title">Proof.<br>Daily.</h3>
+        <p class="comm-card-body">
+          Cada día de entrenamiento<br>
+          se documenta, se publica<br>
+          y se convierte en parte<br>
+          del archivo de la marca.
+        </p>
+        <span class="comm-card-tag">DIA X/238 · TikTok · Instagram</span>
+      </div>
+      <div class="community-card" role="listitem">
+        <span class="comm-card-type">Próximos drops</span>
+        <h3 class="comm-card-title">DROP 002<br>En proceso.</h3>
+        <p class="comm-card-body">
+          Cada nuevo drop sale<br>
+          después de completar<br>
+          el reto anterior.<br>
+          Sin atajos.
+        </p>
+        <span class="comm-card-tag">Acceso prioritario · Miembros DROP 001</span>
+      </div>
+    </div>
+
+    <div class="ticker-strip" aria-hidden="true">
+      <div class="ticker-inner">
+        <span class="ticker-phrase">Primero lo vivo</span><span class="ticker-dot">·</span>
+        <span class="ticker-phrase">No hay motivación, solo movimiento</span><span class="ticker-dot">·</span>
+        <span class="ticker-phrase">La marca es la prueba</span><span class="ticker-dot">·</span>
+        <span class="ticker-phrase">Construido a través de la repetición</span><span class="ticker-dot">·</span>
+        <span class="ticker-phrase">El acceso se gana</span><span class="ticker-dot">·</span>
+        <span class="ticker-phrase">Keep Running</span><span class="ticker-dot">·</span>
+        <span class="ticker-phrase">Primero lo vivo</span><span class="ticker-dot">·</span>
+        <span class="ticker-phrase">No hay motivación, solo movimiento</span><span class="ticker-dot">·</span>
+        <span class="ticker-phrase">La marca es la prueba</span><span class="ticker-dot">·</span>
+        <span class="ticker-phrase">El acceso se gana</span><span class="ticker-dot">·</span>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- BANDA G: WAITLIST -->
+  <section class="band-waitlist" aria-label="Lista de espera">
+
+    <p class="waitlist-eyebrow">DROP 002 · En construcción</p>
+    <h2 class="waitlist-title">
+      Sé el primero.
+      <em>Otra vez.</em>
+    </h2>
+    <p class="waitlist-body">
+      Los miembros de DROP 001 tienen acceso prioritario
+      al siguiente drop. Si no eres miembro, entra a la
+      lista de espera. No prometemos nada. Solo prueba.
+    </p>
+
+    <div class="waitlist-form-wrap">
+      <form class="waitlist-form" id="waitlist-form" novalidate>
+        <label for="waitlist-inp" class="sr-only">Tu correo electrónico</label>
+        <input id="waitlist-inp" class="waitlist-input" type="email"
+          placeholder="tu@correo.com"
+          autocomplete="email" spellcheck="false"
+          aria-describedby="waitlist-msg">
+        <button type="submit" class="waitlist-btn">Unirme →</button>
+      </form>
+      <p class="waitlist-fine" id="waitlist-msg" role="alert" aria-live="polite">
+        Sin spam · Solo drops reales · Siempre limitado
+      </p>
+    </div>
+
+    <div class="waitlist-benefits" role="list">
+      <div class="benefit-item" role="listitem">
+        <span class="benefit-num" aria-hidden="true">01</span>
+        <span class="benefit-text">Acceso prioritario<br>a futuros drops<br>antes del lanzamiento</span>
+      </div>
+      <div class="benefit-item" role="listitem">
+        <span class="benefit-num" aria-hidden="true">02</span>
+        <span class="benefit-text">Contenido exclusivo<br>del proceso de diseño<br>y pruebas en ruta</span>
+      </div>
+      <div class="benefit-item" role="listitem">
+        <span class="benefit-num" aria-hidden="true">03</span>
+        <span class="benefit-text">Invitación a eventos<br>y retos privados<br>de la comunidad KEEP</span>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- BANDA D: ACCESS + FOOTER -->
+  <section class="band-access" aria-label="Acceso y cuenta regresiva">
+
+    <h2 class="access-heading">
+      50 Códigos.
+      <em>1 Destino.</em>
+    </h2>
+
+    <form class="access-form" id="access-form" novalidate>
+      <label for="access-inp" class="sr-only">Tu código de acceso</label>
+      <input id="access-inp" class="access-input" type="text"
+        placeholder="tu código de acceso"
+        autocomplete="off" spellcheck="false" maxlength="10">
+      <button type="submit" class="access-btn">Acceder →</button>
+    </form>
+    <p class="access-note">Códigos únicos y personales · 50 sets numerados · Edición irrepetible</p>
+
+    <div class="big-countdown" aria-label="Cuenta regresiva al Maratón Puebla">
+      <p class="big-cd-label">Maratón Puebla · 4 nov 2026</p>
+      <div class="big-cd-row">
+        <div class="big-cd-cell">
+          <span class="big-cd-num" id="bd">---</span>
+          <span class="big-cd-unit">Días</span>
+        </div>
+        <div class="big-cd-cell">
+          <span class="big-cd-num" id="bh">--</span>
+          <span class="big-cd-unit">Horas</span>
+        </div>
+        <div class="big-cd-cell">
+          <span class="big-cd-num" id="bm">--</span>
+          <span class="big-cd-unit">Minutos</span>
+        </div>
+        <div class="big-cd-cell">
+          <span class="big-cd-num" id="bs">--</span>
+          <span class="big-cd-unit">Segundos</span>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer-trilogy" aria-label="Manifiesto KEEP">
+      <p class="trilogy-line">primero lo vivo, luego lo vendo</p>
+      <p class="trilogy-line">el acceso no se compra, se obtiene</p>
+      <p class="trilogy-line">la disciplina no es lineal</p>
     </footer>
 
-  </div>
+    <div class="footer-bar">
+      <span class="footer-mark">KEEP</span>
+      <span class="footer-legal">© KEEP 2026 · DROP 001 · Todos los derechos reservados</span>
+    </div>
 
-  <script>
-    /* ── CURSOR ──────────────────────────────────────── */
-    const dot  = document.getElementById('cursor-dot');
-    const ring = document.getElementById('cursor-ring');
-    let mx = 0, my = 0;   /* mouse target */
-    let rx = 0, ry = 0;   /* ring current (lerped) */
+  </section>
 
-    document.addEventListener('mousemove', e => {
-      mx = e.clientX;
-      my = e.clientY;
-      dot.style.left = mx + 'px';
-      dot.style.top  = my + 'px';
+</main>
+
+<script>
+/* ════════════════════════════════════════════════════════
+   KEEP — DROP 001  |  Vanilla ES6, zero dependencies
+════════════════════════════════════════════════════════ */
+
+const CODES     = new Set(['PABLO','KEEP001','DROP001']);
+const NO_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ── GATE ─────────────────────────────────────────────── */
+const gateEl  = document.getElementById('gate');
+const homeEl  = document.getElementById('home');
+const gateInp = document.getElementById('gate-inp');
+const gateErr = document.getElementById('gate-err');
+
+document.getElementById('gate-form').addEventListener('submit', e => {
+  e.preventDefault();
+  const val = gateInp.value.trim().toUpperCase();
+  if (CODES.has(val)) {
+    gateErr.classList.remove('show');
+    gateEl.classList.add('exiting');
+    setTimeout(() => {
+      gateEl.style.display = 'none';
+      homeEl.classList.add('on');
+      startHome();
+    }, 900);
+  } else {
+    gateInp.classList.add('error');
+    gateErr.textContent = 'Código no válido — intenta de nuevo.';
+    gateErr.classList.add('show');
+    setTimeout(() => gateInp.classList.remove('error'), 380);
+    gateInp.select();
+  }
+});
+
+document.getElementById('access-form').addEventListener('submit', e => {
+  e.preventDefault();
+  const inp = document.getElementById('access-inp');
+  if (CODES.has(inp.value.trim().toUpperCase())) {
+    inp.style.borderColor = 'rgba(244,241,234,0.8)';
+    setTimeout(() => { inp.style.borderColor = ''; }, 700);
+  } else {
+    inp.style.animation = 'shake 0.32s ease';
+    setTimeout(() => { inp.style.animation = ''; }, 400);
+  }
+});
+
+/* ── COUNTDOWN ───────────────────────────────────────── */
+const TARGET = new Date('2026-11-04T07:00:00-06:00').getTime();
+
+function pad2(n) { return String(Math.max(0, Math.floor(n))).padStart(2,'0'); }
+
+function tick() {
+  const diff = Math.max(0, TARGET - Date.now());
+  const days = Math.floor(diff / 86400000);
+  const hrs  = Math.floor((diff % 86400000) / 3600000);
+  const min  = Math.floor((diff % 3600000)  / 60000);
+  const sec  = Math.floor((diff % 60000)    / 1000);
+  const set  = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  set('gd',days); set('gh',pad2(hrs)); set('gm',pad2(min)); set('gs',pad2(sec));
+  set('bd',days); set('bh',pad2(hrs)); set('bm',pad2(min)); set('bs',pad2(sec));
+}
+tick();
+setInterval(tick, 1000);
+
+/* ── HOME INIT ───────────────────────────────────────── */
+function startHome() {
+  initRunner();
+  initTopo();
+  initCloud();
+  initWave();
+  initTilt();
+  initRoute();
+  initChallenge();
+  initWaitlist();
+}
+
+/* ── PARTICLE RUNNER — VOLUMETRIC WHITE ──────────────── */
+function initRunner() {
+  const canvas = document.getElementById('runner-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let W, H, raf;
+
+  /*
+   * Running figure — normalized coords [0..1]
+   * Figure centered at ~0.62 x, spanning full height
+   * Each group has varying density and size for volumetric feel
+   */
+  const jit = (n, r) => n + (Math.random() - 0.5) * r;
+
+  /* Core figure: tighter, brighter particles */
+  const core = [
+    ...Array.from({length:16}, () => ({ tx:jit(0.63,0.05), ty:jit(0.09,0.05), sz:2.0, op:0.85 })), // head
+    ...Array.from({length:8},  () => ({ tx:jit(0.62,0.02), ty:jit(0.17,0.03), sz:1.5, op:0.75 })), // neck
+    ...Array.from({length:30}, () => ({ tx:jit(0.60,0.10), ty:jit(0.26,0.13), sz:2.2, op:0.70 })), // torso
+    ...Array.from({length:18}, (_,i) => ({ tx:0.50-i*.020+jit(0,.02), ty:0.29+i*.022+jit(0,.02), sz:1.8, op:0.65 })), // L arm
+    ...Array.from({length:18}, (_,i) => ({ tx:0.70+i*.016+jit(0,.02), ty:0.27+i*.008+jit(0,.02), sz:1.8, op:0.60 })), // R arm
+    ...Array.from({length:24}, (_,i) => ({ tx:0.50-i*.013+jit(0,.02), ty:0.50+i*.022+jit(0,.02), sz:2.0, op:0.72 })), // L leg
+    ...Array.from({length:24}, (_,i) => ({ tx:0.66+i*.010+jit(0,.02), ty:0.50+i*.020+jit(0,.02), sz:2.0, op:0.68 })), // R leg
+    ...Array.from({length:10}, () => ({ tx:jit(0.30,0.06), ty:jit(0.79,0.04), sz:1.6, op:0.60 })), // L foot
+    ...Array.from({length:10}, () => ({ tx:jit(0.75,0.06), ty:jit(0.84,0.04), sz:1.6, op:0.55 })), // R foot
+  ];
+
+  /* Halo: larger, dimmer particles for volumetric smoke */
+  const halo = [
+    ...Array.from({length:35}, () => ({ tx:jit(0.63,0.18), ty:jit(0.10,0.18), sz:5.0, op:0.18 })), // head halo
+    ...Array.from({length:50}, () => ({ tx:jit(0.60,0.22), ty:jit(0.26,0.22), sz:6.5, op:0.14 })), // torso halo
+    ...Array.from({length:30}, () => ({ tx:jit(0.58,0.28), ty:jit(0.50,0.28), sz:5.5, op:0.12 })), // leg halo
+    ...Array.from({length:20}, () => ({ tx:jit(0.63,0.12), ty:jit(0.18,0.12), sz:4.0, op:0.16 })), // body join
+  ];
+
+  /* Motion dust: very large, very faint */
+  const dust = Array.from({length:40}, () => ({
+    tx: jit(0.62, 0.35),
+    ty: jit(0.45, 0.40),
+    sz: 10 + Math.random() * 16,
+    op: 0.04 + Math.random() * 0.06,
+  }));
+
+  /* Ambient scatter */
+  const scatter = Array.from({length:30}, () => ({
+    tx: 0.28 + Math.random() * 0.55,
+    ty: 0.05 + Math.random() * 0.90,
+    sz: 0.6 + Math.random() * 1.0,
+    op: 0.2 + Math.random() * 0.35,
+  }));
+
+  /* Build particle objects */
+  function mkPt(def) {
+    return {
+      tx: def.tx, ty: def.ty,
+      x: Math.random(), y: Math.random(),
+      vx: 0, vy: 0,
+      sz:  def.sz,
+      spd: 0.04 + Math.random() * 0.04,
+      da:  Math.random() * Math.PI * 2,
+      ds:  0.005 + Math.random() * 0.005,
+      dr:  0.002 + Math.random() * 0.006,
+      op:  def.op,
+    };
+  }
+
+  const allPts = [...core, ...halo, ...dust, ...scatter].map(mkPt);
+
+  function resize() {
+    W = canvas.width  = canvas.offsetWidth  || canvas.parentElement.offsetWidth  || 800;
+    H = canvas.height = canvas.offsetHeight || canvas.parentElement.offsetHeight || 600;
+  }
+
+  /* Ambient glow: a large soft white radial behind the figure */
+  function drawAmbient() {
+    const cx = W * 0.62, cy = H * 0.42;
+    const gr = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.min(W, H) * 0.38);
+    gr.addColorStop(0,   'rgba(255,255,255,0.06)');
+    gr.addColorStop(0.5, 'rgba(240,238,234,0.02)');
+    gr.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = gr;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, W * 0.38, H * 0.50, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  let t = 0;
+  function draw() {
+    t += 0.006;
+    ctx.clearRect(0, 0, W, H);
+
+    /* Ambient glow behind figure */
+    ctx.globalCompositeOperation = 'source-over';
+    drawAmbient();
+
+    /* Particles — lighter composite for luminous stack */
+    ctx.globalCompositeOperation = 'lighter';
+
+    for (const p of allPts) {
+      const dx = Math.cos(p.da + t * p.ds) * p.dr;
+      const dy = Math.sin(p.da + t * p.ds) * p.dr;
+      const gx = (p.tx + dx) * W;
+      const gy = (p.ty + dy) * H;
+
+      p.vx += (gx - p.x * W) * p.spd * 0.06;
+      p.vy += (gy - p.y * H) * p.spd * 0.06;
+      p.vx *= 0.88; p.vy *= 0.88;
+      p.x  += p.vx / W;
+      p.y  += p.vy / H;
+
+      const px = p.x * W, py = p.y * H;
+      const r  = p.sz * Math.min(W, H) * 0.018;
+      const g  = ctx.createRadialGradient(px, py, 0, px, py, r);
+      g.addColorStop(0,   `rgba(255,255,255,${p.op})`);
+      g.addColorStop(0.3, `rgba(240,238,234,${p.op * 0.5})`);
+      g.addColorStop(1,   'rgba(0,0,0,0)');
+      ctx.beginPath();
+      ctx.arc(px, py, r, 0, Math.PI * 2);
+      ctx.fillStyle = g;
+      ctx.fill();
+    }
+
+    ctx.globalCompositeOperation = 'source-over';
+    if (!NO_MOTION) raf = requestAnimationFrame(draw);
+  }
+
+  const ro = new ResizeObserver(() => { cancelAnimationFrame(raf); resize(); draw(); });
+  ro.observe(canvas.parentElement);
+  resize();
+  draw();
+  if (!NO_MOTION) raf = requestAnimationFrame(draw);
+}
+
+/* ── TOPOGRAPHIC LINES ───────────────────────────────── */
+function initTopo() {
+  const svg = document.getElementById('topo-svg');
+  if (!svg) return;
+
+  const W = 1440, H = 400;
+  const LINES = 14;
+
+  /* Generate organic contour-like paths */
+  for (let i = 0; i < LINES; i++) {
+    const baseY = H * 0.15 + (i / (LINES - 1)) * H * 0.75;
+    const opacity = 0.15 + (i / LINES) * 0.55; /* darker toward bottom */
+    let d = `M 0 ${baseY}`;
+    let x = 0;
+    while (x < W) {
+      const step = 60 + Math.random() * 80;
+      const y    = baseY + (Math.random() - 0.5) * (20 + i * 3);
+      d += ` Q ${x + step / 2} ${y + (Math.random() - 0.5) * 15} ${x + step} ${baseY + (Math.random() - 0.5) * 12}`;
+      x += step;
+    }
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d', d);
+    path.setAttribute('stroke', `rgba(244,241,234,${opacity})`);
+    path.setAttribute('stroke-width', '0.7');
+    path.setAttribute('fill', 'none');
+    svg.appendChild(path);
+  }
+
+  /* Mask: fade from transparent top to opaque bottom */
+  const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+  defs.innerHTML = `
+    <linearGradient id="topoMask" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="white" stop-opacity="0"/>
+      <stop offset="60%" stop-color="white" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="white" stop-opacity="1"/>
+    </linearGradient>
+    <mask id="topoFade">
+      <rect width="100%" height="100%" fill="url(#topoMask)"/>
+    </mask>
+  `;
+  svg.insertBefore(defs, svg.firstChild);
+  svg.querySelectorAll('path').forEach(p => p.setAttribute('mask','url(#topoFade)'));
+}
+
+/* ── POINT CLOUD ─────────────────────────────────────── */
+function initCloud() {
+  const c = document.getElementById('cloud-canvas');
+  if (!c) return;
+  const ctx = c.getContext('2d');
+  const W = c.width, H = c.height;
+  ctx.clearRect(0, 0, W, H);
+  for (let i = 0; i < 700; i++) {
+    const u = Math.random() || 1e-10, v = Math.random();
+    const g = Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+    const py = H * 0.18 + g * H * 0.28;
+    if (py < 0 || py > H) continue;
+    const spread = (py / H) * W * 0.9 + W * 0.08;
+    const px = W * 0.5 + (Math.random() - 0.5) * spread;
+    if (px < 0 || px > W) continue;
+    ctx.beginPath();
+    ctx.arc(px, py, Math.random() * 1.4 + 0.3, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(244,241,234,${Math.random() * 0.7 + 0.05})`;
+    ctx.fill();
+  }
+}
+
+/* ── WAVE MESH ───────────────────────────────────────── */
+function initWave() {
+  const svg = document.getElementById('wave-svg');
+  if (!svg) return;
+  const W = 1440, H = 600, ROWS = 9, COLS = 14;
+  const lines = [];
+  for (let r = 0; r < ROWS; r++) {
+    const baseY = (r / (ROWS - 1)) * H;
+    const pts = Array.from({length: COLS + 1}, (_, c) => ({
+      x: (c / COLS) * W, oy: baseY,
+      amp: 18 + Math.random() * 35,
+      freq: 0.4 + Math.random() * 0.9,
+      phase: Math.random() * Math.PI * 2,
+    }));
+    const el = document.createElementNS('http://www.w3.org/2000/svg','polyline');
+    el.setAttribute('stroke','#F4F1EA'); el.setAttribute('stroke-width','0.5'); el.setAttribute('fill','none');
+    svg.appendChild(el);
+    lines.push({el, pts});
+  }
+  let t = 0;
+  function animWave() {
+    t += 0.004;
+    for (const ln of lines) {
+      ln.el.setAttribute('points', ln.pts.map(p => {
+        const y = p.oy + Math.sin(p.phase + t * p.freq + p.x * 0.0025) * p.amp;
+        return `${p.x},${y}`;
+      }).join(' '));
+    }
+    if (!NO_MOTION) requestAnimationFrame(animWave);
+  }
+  if (NO_MOTION) { for (const ln of lines) ln.el.setAttribute('points', ln.pts.map(p=>`${p.x},${p.oy}`).join(' ')); }
+  else requestAnimationFrame(animWave);
+}
+
+/* ── CARD TILT ───────────────────────────────────────── */
+function initTilt() {
+  const wrap  = document.getElementById('card-wrap');
+  const card  = document.getElementById('m-card');
+  const sheen = document.getElementById('c-sheen');
+  if (!wrap || !card || NO_MOTION) return;
+  const MAX = 14;
+  function apply(cx, cy) {
+    const r  = wrap.getBoundingClientRect();
+    const nx = (cx - r.left) / r.width, ny = (cy - r.top) / r.height;
+    card.style.transform = `rotateX(${-(ny-.5)*MAX*2}deg) rotateY(${(nx-.5)*MAX*2}deg) scale(1.02)`;
+    sheen.style.setProperty('--mx', `${nx*100}%`);
+    sheen.style.setProperty('--my', `${ny*100}%`);
+  }
+  function reset() {
+    card.style.transform = 'rotateX(0) rotateY(0) scale(1)';
+    sheen.style.setProperty('--mx','50%'); sheen.style.setProperty('--my','50%');
+  }
+  wrap.addEventListener('mousemove',  e => apply(e.clientX, e.clientY));
+  wrap.addEventListener('mouseleave', reset);
+  wrap.addEventListener('touchmove',  e => { e.preventDefault(); apply(e.touches[0].clientX, e.touches[0].clientY); }, {passive:false});
+  wrap.addEventListener('touchend',   reset);
+}
+
+/* ── CHALLENGE TRACKER ───────────────────────────────── */
+function initChallenge() {
+  /*
+   * Challenge start: same day as the marathon countdown minus 238 days.
+   * Marathon = 4 Nov 2026.  238 days before = 9 Mar 2026.
+   * Adjust START to the actual first day of the challenge.
+   */
+  const START  = new Date('2026-03-09T00:00:00-06:00').getTime();
+  const TOTAL  = 238;
+  const now    = Date.now();
+  const daysPassed = Math.max(0, Math.min(TOTAL, Math.floor((now - START) / 86400000)));
+  const pct    = Math.round((daysPassed / TOTAL) * 100);
+  const kmPerDay = 5.2;                    /* average km/day placeholder */
+  const km     = (daysPassed * kmPerDay).toFixed(0);
+  const paceMin = 4, paceSec = 28;
+  const pace   = `${paceMin}:${String(paceSec).padStart(2,'0')}`;
+
+  /* Update text nodes */
+  const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  setTxt('ch-day-current', daysPassed);
+  setTxt('ch-days-left',   TOTAL - daysPassed);
+  setTxt('ch-progress-pct', pct + '%');
+  setTxt('ch-km',  km);
+  setTxt('ch-pace', pace);
+
+  /* Animate progress bar */
+  const fill  = document.getElementById('ch-progress-fill');
+  const thumb = document.getElementById('ch-progress-thumb');
+  if (fill) {
+    requestAnimationFrame(() => {
+      fill.style.width = pct + '%';
+      if (thumb) thumb.style.left = '100%';
     });
+  }
 
-    (function lerpRing() {
-      rx += (mx - rx) * 0.12;
-      ry += (my - ry) * 0.12;
-      ring.style.left = rx + 'px';
-      ring.style.top  = ry + 'px';
-      requestAnimationFrame(lerpRing);
-    })();
+  /* Build day grid */
+  const grid = document.getElementById('day-grid');
+  if (!grid) return;
+  for (let i = 1; i <= TOTAL; i++) {
+    const tile = document.createElement('div');
+    tile.className = 'day-tile';
+    tile.setAttribute('aria-label', `Día ${i}`);
+    if (i < daysPassed)  tile.classList.add('done');
+    if (i === daysPassed) tile.classList.add('today');
+    grid.appendChild(tile);
+  }
+}
 
-    /* ── HERO CANVAS — sine wave interference ───────── */
-    function initHeroCanvas() {
-      const cv  = document.getElementById('hero-canvas');
-      const ctx = cv.getContext('2d');
-      let W, H, t = 0;
-
-      function resize() {
-        W = cv.width  = cv.offsetWidth;
-        H = cv.height = cv.offsetHeight;
-      }
-      resize();
-      window.addEventListener('resize', resize);
-
-      /* 8 waves: amplitude (H ratio), freq, phase offset, speed, opacity */
-      const WAVES = [
-        { a: 0.28, f: 0.0026, ph: 0.00, s:  0.0080, o: 0.065 },
-        { a: 0.15, f: 0.0043, ph: 1.20, s: -0.0060, o: 0.050 },
-        { a: 0.36, f: 0.0017, ph: 2.50, s:  0.0045, o: 0.070 },
-        { a: 0.11, f: 0.0066, ph: 0.80, s: -0.0095, o: 0.045 },
-        { a: 0.22, f: 0.0033, ph: 3.90, s:  0.0070, o: 0.055 },
-        { a: 0.10, f: 0.0055, ph: 1.60, s: -0.0078, o: 0.048 },
-        { a: 0.19, f: 0.0022, ph: 4.30, s:  0.0058, o: 0.062 },
-        { a: 0.14, f: 0.0049, ph: 2.10, s: -0.0085, o: 0.050 },
-      ];
-
-      function draw() {
-        ctx.clearRect(0, 0, W, H);
-        t++;
-        const cy = H * 0.5;
-        WAVES.forEach(w => {
-          ctx.beginPath();
-          for (let x = 0; x <= W; x += 2) {
-            const y = cy + Math.sin(x * w.f + w.ph + t * w.s) * (H * w.a);
-            x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-          }
-          ctx.strokeStyle = `rgba(232,228,221,${w.o})`;
-          ctx.lineWidth = 1;
-          ctx.stroke();
-        });
-        requestAnimationFrame(draw);
-      }
-      draw();
+/* ── WAITLIST FORM ───────────────────────────────────── */
+function initWaitlist() {
+  const form = document.getElementById('waitlist-form');
+  const msg  = document.getElementById('waitlist-msg');
+  if (!form || !msg) return;
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const inp = document.getElementById('waitlist-inp');
+    const email = inp ? inp.value.trim() : '';
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      msg.textContent = 'Ingresa un correo válido para unirte.';
+      if (inp) { inp.style.animation = 'shake 0.32s ease'; setTimeout(() => { inp.style.animation = ''; }, 400); }
+      return;
     }
+    /* Simulated success — replace with real API call */
+    if (inp) inp.value = '';
+    msg.textContent = '✓ Registrado. Te avisamos antes que nadie.';
+    msg.style.color = 'rgba(244,241,234,0.6)';
+    setTimeout(() => {
+      msg.textContent = 'Sin spam · Solo drops reales · Siempre limitado';
+      msg.style.color = '';
+    }, 4000);
+  });
+}
 
-    /* ── MANIFESTO SCROLL REVEAL ─────────────────────── */
-    function initManifesto() {
-      const section = document.getElementById('manifesto');
-      const lines   = section.querySelectorAll('.mnf-line');
-      const obs = new IntersectionObserver(entries => {
-        if (entries[0].isIntersecting) {
-          lines.forEach(l => l.classList.add('in-view'));
-          obs.disconnect();
-        }
-      }, { threshold: 0.2 });
-      obs.observe(section);
-    }
-
-    /* ── DROP CANVAS — vertical streaks ─────────────── */
-    function initDropCanvas() {
-      const cv  = document.getElementById('drop-canvas');
-      const ctx = cv.getContext('2d');
-      let W, H;
-
-      function resize() {
-        W = cv.width  = cv.offsetWidth;
-        H = cv.height = cv.offsetHeight;
-        ctx.fillStyle = '#050505';
-        ctx.fillRect(0, 0, W, H);
-      }
-      resize();
-      new ResizeObserver(resize).observe(cv.parentElement);
-
-      const N = 65;
-      function mkStreak() {
-        return {
-          x:     Math.random() * (W || window.innerWidth * 0.5),
-          y:     -(Math.random() * (H || window.innerHeight)),
-          speed: 1.2 + Math.random() * 3.4,
-          alpha: 0.18 + Math.random() * 0.55,
-          w:     Math.random() < 0.28 ? 2 : 1,
-        };
-      }
-      const streaks = Array.from({ length: N }, mkStreak);
-
-      function draw() {
-        /* fade overlay creates the trail */
-        ctx.fillStyle = 'rgba(5,5,5,0.14)';
-        ctx.fillRect(0, 0, W, H);
-
-        streaks.forEach(s => {
-          s.y += s.speed;
-          if (s.y > H + 4) {
-            s.x     = Math.random() * W;
-            s.y     = -4;
-            s.speed = 1.2 + Math.random() * 3.4;
-            s.alpha = 0.18 + Math.random() * 0.55;
-          }
-          ctx.fillStyle = `rgba(232,228,221,${s.alpha.toFixed(2)})`;
-          ctx.fillRect(Math.floor(s.x), Math.floor(s.y), s.w, 3);
-        });
-
-        requestAnimationFrame(draw);
-      }
-      draw();
-    }
-
-    /* ── UTC CLOCK ───────────────────────────────────── */
-    function initClock() {
-      const navEl    = document.getElementById('nav-time');
-      const footerEl = document.getElementById('footer-time');
-
-      function tick() {
-        const n = new Date();
-        const p = v => String(v).padStart(2, '0');
-        const t = `${p(n.getUTCHours())}:${p(n.getUTCMinutes())}:${p(n.getUTCSeconds())} UTC`;
-        if (navEl)    navEl.textContent    = t;
-        if (footerEl) footerEl.textContent = t;
-      }
-      tick();
-      setInterval(tick, 1000);
-    }
-
-    /* ── SIDEBAR SECTION TRACKER ─────────────────────── */
-    function initSidebarTracker() {
-      const secEl = document.getElementById('sidebar-sec');
-      const secs  = document.querySelectorAll('[data-sec]');
-      const obs   = new IntersectionObserver(entries => {
-        entries.forEach(e => {
-          if (e.isIntersecting) secEl.textContent = e.target.dataset.sec;
-        });
-      }, { threshold: 0.4 });
-      secs.forEach(s => obs.observe(s));
-    }
-
-    /* ── BOOT ALL MAIN SECTIONS ──────────────────────── */
-    function startMainSections() {
-      initHeroCanvas();
-      initDropCanvas();
-      initManifesto();
-      initClock();
-      initSidebarTracker();
-      /* double-RAF: ensures #main is rendered before transition fires */
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        document.getElementById('hero').classList.add('revealed');
-      }));
-    }
-
-    /* ── LOCK SCREEN ─────────────────────────────────── */
-    (function () {
-      const KEYS   = ['PABLO', 'KEEP001', 'DROP001'];
-      const lockEl = document.getElementById('lock');
-      const mainEl = document.getElementById('main');
-      const input  = document.getElementById('lock-input');
-      const errEl  = document.getElementById('lock-error');
-
-      /* — Particle canvas — */
-      const cv  = document.getElementById('lock-canvas');
-      const ctx = cv.getContext('2d');
-      let W, H, animId;
-      const N = 180;
-
-      const nodes = Array.from({ length: N }, () => ({
-        x: 0, y: 0, seeded: false,
-        vx: (Math.random() - 0.5) * 0.38,
-        vy: (Math.random() - 0.5) * 0.38,
-      }));
-
-      function resize() {
-        W = cv.width  = cv.offsetWidth;
-        H = cv.height = cv.offsetHeight;
-        nodes.forEach(n => {
-          if (!n.seeded) {
-            n.x = Math.random() * W;
-            n.y = Math.random() * H;
-            n.seeded = true;
-          }
-        });
-      }
-      resize();
-      window.addEventListener('resize', resize);
-
-      const DIST  = 130;
-      const DIST2 = DIST * DIST;
-      const MOUSE_R2 = 150 * 150;          /* blue zone radius² around cursor */
-      let mxL = -9999, myL = -9999;
-      document.addEventListener('mousemove', e => { mxL = e.clientX; myL = e.clientY; });
-
-      function drawFrame() {
-        ctx.clearRect(0, 0, W, H);
-
-        for (let i = 0; i < N; i++) {
-          const a = nodes[i];
-          a.x += a.vx;
-          a.y += a.vy;
-          if (a.x < 0 || a.x > W) a.vx *= -1;
-          if (a.y < 0 || a.y > H) a.vy *= -1;
-
-          /* connections to subsequent nodes only (avoid double-draw) */
-          for (let j = i + 1; j < N; j++) {
-            const b  = nodes[j];
-            const dx = a.x - b.x, dy = a.y - b.y;
-            const d2 = dx * dx + dy * dy;
-            if (d2 > DIST2) continue;
-
-            const alpha = (1 - d2 / DIST2);
-            const midX  = (a.x + b.x) * 0.5;
-            const midY  = (a.y + b.y) * 0.5;
-            const dmx   = midX - mxL, dmy = midY - myL;
-            const nearCursor = (dmx * dmx + dmy * dmy) < MOUSE_R2;
-
-            ctx.lineWidth = 0.6;
-            ctx.strokeStyle = nearCursor
-              ? `rgba(26,107,255,${(alpha * 0.6).toFixed(3)})`
-              : `rgba(232,228,221,${(alpha * 0.09).toFixed(3)})`;
-            ctx.beginPath();
-            ctx.moveTo(a.x, a.y);
-            ctx.lineTo(b.x, b.y);
-            ctx.stroke();
-          }
-
-          /* node dot */
-          ctx.beginPath();
-          ctx.arc(a.x, a.y, 1.3, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(232,228,221,0.22)';
-          ctx.fill();
-        }
-
-        animId = requestAnimationFrame(drawFrame);
-      }
-      drawFrame();
-
-      /* — Input handling — */
-      input.addEventListener('input', () => {
-        input.classList.remove('error');
-        errEl.classList.remove('show');
-      });
-
-      input.addEventListener('keydown', e => {
-        if (e.key !== 'Enter') return;
-        const val = input.value.trim().toUpperCase();
-
-        if (KEYS.includes(val)) {
-          /* ✓ correct — open shackle, then fade out */
-          input.disabled = true;
-          lockEl.classList.add('unlocking');
-          setTimeout(() => {
-            lockEl.classList.add('fade-out');
-            lockEl.addEventListener('transitionend', () => {
-              cancelAnimationFrame(animId);
-              lockEl.style.display = 'none';
-              mainEl.removeAttribute('hidden');
-              startMainSections();
-            }, { once: true });
-          }, 500);
-        } else {
-          /* ✗ wrong — shake + red flash */
-          input.value = '';
-          input.classList.remove('error');
-          void input.offsetWidth;            /* force reflow to restart animation */
-          input.classList.add('error');
-          errEl.classList.add('show');
-          setTimeout(() => {
-            input.classList.remove('error');
-            errEl.classList.remove('show');
-          }, 1600);
-        }
-      });
-    })();
-  </script>
+/* ── ROUTE SCROLL ────────────────────────────────────── */
+function initRoute() {
+  const path = document.getElementById('route-path');
+  if (!path) return;
+  const len = path.getTotalLength();
+  if (NO_MOTION) { path.style.strokeDasharray = 'none'; return; }
+  path.style.strokeDasharray  = `${len}`;
+  path.style.strokeDashoffset = `${len}`;
+  const section = document.querySelector('.band-drop');
+  function onScroll() {
+    if (!section) return;
+    const rect = section.getBoundingClientRect();
+    const prog = Math.min(1, Math.max(0, (window.innerHeight - rect.top) / (window.innerHeight + rect.height * 0.4)));
+    path.style.strokeDashoffset = `${len * (1 - prog)}`;
+  }
+  window.addEventListener('scroll', onScroll, {passive: true});
+  onScroll();
+}
+</script>
 </body>
 </html>
